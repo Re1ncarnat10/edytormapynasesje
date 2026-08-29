@@ -74,7 +74,8 @@
             { id: 'room', name: 'Komnata', color: 'bg-slate-50' },
             { id: 'secret', name: 'Tajna Przestrzeń', color: 'bg-slate-800' },
             { id: 'trap', name: 'Obszar Pułapki', color: 'bg-red-900' },
-            { id: 'door', name: 'Drzwi/Przejście', color: 'bg-amber-800' }
+            { id: 'door', name: 'Drzwi/Przejście', color: 'bg-amber-800' },
+            { id: 'custom', name: 'Własny Kolor', color: 'bg-transparent border border-white' }
         ];
 
         const DEFAULT_STAMPS = [
@@ -169,6 +170,8 @@
             const [dragStart, setDragStart] = useState(null);
             const [dragCurrent, setDragCurrent] = useState(null);
             const [isDrawing, setIsDrawing] = useState(false);
+            const [history, setHistory] = useState([]);
+            const [customColor, setCustomColor] = useState("#8b5cf6");
 
             // Custom Stamps
             const [customStamps, setCustomStamps] = useState(() => JSON.parse(localStorage.getItem('scooby_custom_stamps') || '[]'));
@@ -223,6 +226,19 @@
                 }
             };
 
+            const pushToHistory = () => {
+                setHistory(prev => [...prev.slice(-19), gridData]);
+            };
+
+            const handleUndo = () => {
+                if (history.length > 0) {
+                    const prevState = history[history.length - 1];
+                    setGridData(prevState);
+                    setHistory(prev => prev.slice(0, -1));
+                    saveToLocal(prevState, rows, cols, mapTitle, tokens);
+                }
+            };
+
             const getCellKey = (r, c) => `${r}_${c}`;
 
             const handleCellAction = (r, c) => {
@@ -239,7 +255,10 @@
                 const newData = { ...gridData };
 
                 if (activeTool === 'erase') delete newData[key];
-                else if (activeTool === 'paint') newData[key] = { ...newData[key], type: activeType };
+                else if (activeTool === 'paint') {
+                    newData[key] = { ...newData[key], type: activeType };
+                    if (activeType === 'custom') newData[key].customBg = customColor;
+                }
                 else if (activeTool === 'line' || activeTool === 'rect' || activeTool === 'hollow_rect') return; // Handled in MouseUp
                 else if (activeTool === 'stamp') {
                     if (activeStamp.id === 'none') newData[key] = { ...newData[key], type: newData[key]?.type || 'floor', iconClass: null, iconColor: null };
@@ -254,6 +273,7 @@
 
             const handleMouseDown = (r, c) => {
                 if (appMode === 'play') return;
+                pushToHistory();
                 if (['line', 'rect', 'hollow_rect'].includes(activeTool)) {
                     setDragStart({r, c}); setDragCurrent({r, c});
                 } else {
@@ -279,6 +299,7 @@
                     cellsToModify.forEach(cell => {
                         const key = getCellKey(cell.r, cell.c);
                         newData[key] = { ...newData[key], type: activeType };
+                        if (activeType === 'custom') newData[key].customBg = customColor;
                     });
                     
                     setGridData(newData); saveToLocal(newData, rows, cols, mapTitle, tokens);
@@ -527,7 +548,12 @@
                         
                         const innerX = x + 0.5; const innerY = y + 0.5; const innerS = cellSize - 1;
                         if (cell) {
-                            ctx.fillStyle = colorMap[cell.type] || colorMap['floor']; ctx.fillRect(innerX, innerY, innerS, innerS);
+                            if (cell.type === 'custom') {
+                                ctx.fillStyle = cell.customBg || '#000000';
+                            } else {
+                                ctx.fillStyle = colorMap[cell.type] || colorMap['floor'];
+                            }
+                            ctx.fillRect(innerX, innerY, innerS, innerS);
                             if (cell.note) { ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.moveTo(innerX, innerY); ctx.lineTo(innerX + 10, innerY); ctx.lineTo(innerX, innerY + 10); ctx.fill(); }
                             if (cell.label && cellSize >= 32) { ctx.fillStyle = (cell.type === 'wall' || cell.type === 'secret' || cell.type === 'trap' || cell.type === 'door') ? '#ffffff' : '#000000'; ctx.font = '9px sans-serif'; ctx.fillText(cell.label.substring(0, 4), innerX + 2, innerY + innerS - 2); }
                         } else {
@@ -574,8 +600,15 @@
                         
                         const cellTokens = tokens.filter(t => t.r === r && t.c === c);
 
+                        let customStyle = { width: cellSize, height: cellSize };
+                        if (cell && cell.type === 'custom') {
+                            customStyle.backgroundColor = cell.customBg || customColor;
+                        } else if (isPreview && activeType === 'custom' && activeTool !== 'erase') {
+                            customStyle.backgroundColor = customColor;
+                        }
+
                         gridElements.push(
-                            <div key={key} className={cellClass} style={{ width: cellSize, height: cellSize }} onMouseDown={() => handleMouseDown(r, c)} onMouseEnter={() => handleMouseEnter(r, c)} onClick={() => { if(appMode === 'play') handleCellAction(r, c); }}>
+                            <div key={key} className={cellClass} style={customStyle} onMouseDown={() => handleMouseDown(r, c)} onMouseEnter={() => handleMouseEnter(r, c)} onClick={() => { if(appMode === 'play') handleCellAction(r, c); }}>
                                 {cell?.note && <div className="note-indicator"></div>}
                                 {cell?.iconClass && <div className="icon-layer" style={{ color: cell.iconColor }}><i className={cell.iconClass}></i></div>}
                                 {cell?.label && cellSize >= 32 && <div className="label-layer">{cell.label}</div>}
@@ -664,6 +697,9 @@
                                                     <button onClick={() => setActiveTool('inspect')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 border ${activeTool === 'inspect' ? 'bg-amber-600 border-amber-400 text-white' : 'bg-slate-700 border-transparent text-slate-300'}`}><i className="fa-solid fa-magnifying-glass"></i><span className="text-[10px] font-bold">Zbadaj</span></button>
                                                     <button onClick={() => setActiveTool('erase')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 border ${activeTool === 'erase' ? 'bg-red-600 border-red-400 text-white' : 'bg-slate-700 border-transparent text-slate-300'}`}><i className="fa-solid fa-eraser"></i><span className="text-[10px] font-bold">Gumka</span></button>
                                                 </div>
+                                                <div className="mt-2">
+                                                    <button onClick={handleUndo} disabled={history.length === 0} className={`w-full p-1.5 rounded flex items-center justify-center gap-2 border transition-colors ${history.length === 0 ? 'bg-slate-800 border-slate-700 text-slate-600 cursor-not-allowed' : 'bg-slate-700 border-slate-600 text-slate-300 hover:text-white hover:bg-slate-600'}`}><i className="fa-solid fa-rotate-left"></i><span className="text-[10px] font-bold uppercase tracking-wider">Cofnij zmianę</span></button>
+                                                </div>
                                             </div>
 
                                             {['paint', 'line', 'rect', 'hollow_rect'].includes(activeTool) && (
@@ -672,10 +708,16 @@
                                                     <div className="grid grid-cols-2 gap-2">
                                                         {TILE_TYPES.map(t => (
                                                             <button key={t.id} onClick={() => setActiveType(t.id)} className={`p-2 rounded border-2 text-xs text-left flex items-center gap-2 ${activeType === t.id ? 'border-indigo-400 bg-slate-700 text-white' : 'border-transparent bg-slate-700 text-slate-400 hover:bg-slate-600'}`}>
-                                                                <div className={`w-4 h-4 rounded-sm shadow-sm ${t.color}`}></div><span className="truncate font-semibold">{t.name}</span>
+                                                                <div className={`w-4 h-4 rounded-sm shadow-sm ${t.color}`} style={t.id === 'custom' ? {backgroundColor: customColor} : {}}></div><span className="truncate font-semibold">{t.name}</span>
                                                             </button>
                                                         ))}
                                                     </div>
+                                                    {activeType === 'custom' && (
+                                                        <div className="mt-2 flex items-center gap-2 bg-slate-900 p-2 rounded-lg border border-slate-700 shadow-inner">
+                                                            <label className="text-[10px] font-bold text-slate-400 uppercase flex-1">Wybierz kolor:</label>
+                                                            <input type="color" value={customColor} onChange={(e) => setCustomColor(e.target.value)} className="bg-transparent border-0 h-8 w-12 cursor-pointer rounded" />
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
 
