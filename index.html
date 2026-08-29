@@ -53,7 +53,7 @@
         ::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #718096; }
 
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 50; backdrop-filter: blur(4px); }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 50; backdrop-filter: blur(4px); overflow-y:auto; padding: 20px;}
         
         .spinner { border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 3px solid #fff; width: 16px; height: 16px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -71,7 +71,7 @@
             { id: 'room', name: 'Komnata', color: 'bg-slate-50' },
             { id: 'secret', name: 'Tajna Przestrzeń', color: 'bg-slate-800' },
             { id: 'trap', name: 'Obszar Pułapki', color: 'bg-red-900' },
-            { id: 'door', name: 'Drzwi/Przejście', color: 'bg-amber-800' }
+            { id: 'door', name: 'Drzwi/Okno', color: 'bg-amber-800' }
         ];
 
         const DEFAULT_STAMPS = [
@@ -82,21 +82,30 @@
             { id: 's_door_secret', name: 'Tajne Drzwi', iconClass: 'fa-solid fa-door-closed', color: '#f59e0b', category: 'Tajemnice' },
             { id: 's_stairs', name: 'Schody', iconClass: 'fa-solid fa-stairs', color: '#d1d5db', category: 'Tajemnice' },
             { id: 's_wrench', name: 'Mechanizm', iconClass: 'fa-solid fa-wrench', color: '#9ca3af', category: 'Tajemnice' },
-            { id: 's_person', name: 'Start', iconClass: 'fa-solid fa-person', color: '#4ade80', category: 'Tajemnice' },
+            
             { id: 's_chair', name: 'Krzesło', iconClass: 'fa-solid fa-chair', color: '#b45309', category: 'Meble' },
             { id: 's_table', name: 'Stolik', iconClass: 'fa-solid fa-table', color: '#92400e', category: 'Meble' },
             { id: 's_desk', name: 'Biurko', iconClass: 'fa-solid fa-computer-desk', color: '#78350f', category: 'Meble' },
             { id: 's_bed', name: 'Łóżko', iconClass: 'fa-solid fa-bed', color: '#93c5fd', category: 'Meble' },
-            { id: 's_box', name: 'Skrzynia/Pudło', iconClass: 'fa-solid fa-box', color: '#d97706', category: 'Meble' },
-            { id: 's_shelf', name: 'Półki/Regał', iconClass: 'fa-solid fa-bars-staggered', color: '#84cc16', category: 'Meble' },
+            { id: 's_box', name: 'Skrzynia', iconClass: 'fa-solid fa-box', color: '#d97706', category: 'Meble' },
+            { id: 's_shelf', name: 'Regał', iconClass: 'fa-solid fa-bars-staggered', color: '#84cc16', category: 'Meble' },
+            { id: 's_bath', name: 'Wanna/Zlew', iconClass: 'fa-solid fa-bath', color: '#67e8f9', category: 'Meble' },
+            { id: 's_couch', name: 'Kanapa', iconClass: 'fa-solid fa-couch', color: '#b91c1c', category: 'Meble' },
+            
             { id: 's_frame', name: 'Obraz/Gablota', iconClass: 'fa-solid fa-image', color: '#ca8a04', category: 'Eksponaty' },
             { id: 's_monument', name: 'Posąg/Rzeźba', iconClass: 'fa-solid fa-monument', color: '#94a3b8', category: 'Eksponaty' },
-            { id: 's_bone', name: 'Skamielina/Kość', iconClass: 'fa-solid fa-bone', color: '#fde68a', category: 'Eksponaty' },
-            { id: 's_shield', name: 'Zbroja/Tarcza', iconClass: 'fa-solid fa-shield-halved', color: '#cbd5e1', category: 'Eksponaty' },
+            { id: 's_bone', name: 'Skamielina', iconClass: 'fa-solid fa-bone', color: '#fde68a', category: 'Eksponaty' },
+            { id: 's_shield', name: 'Zbroja', iconClass: 'fa-solid fa-shield-halved', color: '#cbd5e1', category: 'Eksponaty' },
             { id: 's_ankh', name: 'Artefakt', iconClass: 'fa-solid fa-ankh', color: '#facc15', category: 'Eksponaty' },
+            { id: 's_scroll', name: 'Zwój/Papirus', iconClass: 'fa-solid fa-scroll', color: '#fef08a', category: 'Eksponaty' },
+            { id: 's_sword', name: 'Miecz', iconClass: 'fa-solid fa-khanda', color: '#94a3b8', category: 'Eksponaty' },
+            { id: 's_mask', name: 'Maska', iconClass: 'fa-solid fa-masks-theater', color: '#ef4444', category: 'Eksponaty' },
+
             { id: 's_tree', name: 'Drzewo', iconClass: 'fa-solid fa-tree', color: '#16a34a', category: 'Otoczenie' },
             { id: 's_water', name: 'Woda/Kałuża', iconClass: 'fa-solid fa-water', color: '#3b82f6', category: 'Otoczenie' },
-            { id: 's_car', name: 'Samochód', iconClass: 'fa-solid fa-car', color: '#14b8a6', category: 'Otoczenie' }
+            { id: 's_car', name: 'Samochód', iconClass: 'fa-solid fa-car', color: '#14b8a6', category: 'Otoczenie' },
+            { id: 's_fire', name: 'Ogień/Kocioł', iconClass: 'fa-solid fa-fire', color: '#f97316', category: 'Otoczenie' },
+            { id: 's_barrel', name: 'Beczka', iconClass: 'fa-solid fa-oil-well', color: '#57534e', category: 'Otoczenie' }
         ];
 
         const SCOOBY_GANG = [
@@ -108,8 +117,16 @@
         ];
 
         const PRESETS = [
-            { name: "1. Dom Wujka - Parter", rows: 15, cols: 20, desc: "Główne wejście, salon i okno balkonowe.", data: { "1_9": { type: 'door', iconClass: 'fa-solid fa-person', iconColor: '#4ade80', label: 'Wejście', note: 'Zapasowy klucz pod krasnalem.' }, "6_5": { type: 'room', label: 'Salon' } } },
-            { name: "2. Wielkie Skrzydło Egipskie", rows: 25, cols: 30, desc: "Ekspozycja pełna pułapek.", data: { "12_15": { type: 'trap', iconClass: 'fa-solid fa-ghost', iconColor: '#c084fc', label: 'Sarkofag Faraona', note: 'Ankh z boku to zjeżdżalnia do magazynu.' }, "5_5": { type: 'secret', iconClass: 'fa-solid fa-door-closed', iconColor: '#f59e0b', label: 'Mechanizm Skarabeusza' } } }
+            { name: "1. Dom Wujka - Parter", rows: 15, cols: 20, desc: "Główne wejście, salon i okno balkonowe." },
+            { name: "2. Dom Wujka - Piętro", rows: 15, cols: 20, desc: "Sypialnia wujka i łazienka." },
+            { name: "3. Dom Wujka - Tajna Piwnica", rows: 15, cols: 20, desc: "Miejsce pierwszego spotkania ze Zjawą." },
+            { name: "4. Gabinet Wujka w Muzeum", rows: 15, cols: 15, desc: "Miejsce zaginięcia wujka. Zaskakująco czysto." },
+            { name: "5. Hol Główny i Muzeum", rows: 25, cols: 30, desc: "Szkielet T-Rexa i wejścia do skrzydeł." },
+            { name: "6. Podziemia Muzeum i Kotłownia", rows: 20, cols: 25, desc: "Mroczne korytarze i magazyn rekwizytów." },
+            { name: "7. Pokój Zaworów Wodnych", rows: 12, cols: 15, desc: "Zalane pomieszczenie, więzienie Wujka Velmy." },
+            { name: "8. Biblioteka Miejska", rows: 20, cols: 25, desc: "Regały pełne ksiąg i mikrofilmów." },
+            { name: "9. Archiwum Dokumentów", rows: 15, cols: 20, desc: "Gdzie ukryto akt własności ziemi." },
+            { name: "10. Wielkie Skrzydło Egipskie", rows: 25, cols: 30, desc: "Ekspozycja pełna pułapek." }
         ];
 
         function App() {
@@ -142,9 +159,14 @@
             const [mapTitle, setMapTitle] = useState("Nowa Mapa Scooby-Doo");
             
             // Editor Tools State
-            const [activeTool, setActiveTool] = useState('paint'); 
+            const [activeTool, setActiveTool] = useState('paint'); // paint, line, rect, hollow_rect, stamp, inspect, erase
             const [activeType, setActiveType] = useState('floor');
             
+            // Drag State (for Line and Rect tools)
+            const [dragStart, setDragStart] = useState(null);
+            const [dragCurrent, setDragCurrent] = useState(null);
+            const [isDrawing, setIsDrawing] = useState(false);
+
             // Custom Stamps State
             const [customStamps, setCustomStamps] = useState(() => JSON.parse(localStorage.getItem('scooby_custom_stamps') || '[]'));
             const [stampCategory, setStampCategory] = useState('Tajemnice');
@@ -152,7 +174,6 @@
             const [newStampName, setNewStampName] = useState('');
             const [newStampClass, setNewStampClass] = useState('fa-solid fa-star');
             const [newStampColor, setNewStampColor] = useState('#ffffff');
-            const [isDrawing, setIsDrawing] = useState(false);
             
             // Inspector State
             const [inspectCell, setInspectCell] = useState(null);
@@ -189,6 +210,53 @@
                 localStorage.setItem('scooby_saved_map', JSON.stringify(state));
             };
 
+            const getCellKey = (r, c) => `${r}_${c}`;
+
+            // --- DRAWING ALGORITHMS ---
+            const getLineCells = (r0, c0, r1, c1) => {
+                let cells = [];
+                let dr = Math.abs(r1 - r0);
+                let dc = Math.abs(c1 - c0);
+                let sr = r0 < r1 ? 1 : -1;
+                let sc = c0 < c1 ? 1 : -1;
+                let err = (dr > dc ? dr : -dc) / 2;
+                let curR = r0, curC = c0;
+                while (true) {
+                    cells.push({r: curR, c: curC});
+                    if (curR === r1 && curC === c1) break;
+                    let e2 = err;
+                    if (e2 > -dr) { err -= dc; curR += sr; }
+                    if (e2 < dc) { err += dr; curC += sc; }
+                }
+                return cells;
+            };
+
+            const getRectCells = (r0, c0, r1, c1) => {
+                let cells = [];
+                let minR = Math.min(r0, r1), maxR = Math.max(r0, r1);
+                let minC = Math.min(c0, c1), maxC = Math.max(c0, c1);
+                for (let r = minR; r <= maxR; r++) {
+                    for (let c = minC; c <= maxC; c++) {
+                        cells.push({r, c});
+                    }
+                }
+                return cells;
+            };
+
+            const getHollowRectCells = (r0, c0, r1, c1) => {
+                let cells = [];
+                let minR = Math.min(r0, r1), maxR = Math.max(r0, r1);
+                let minC = Math.min(c0, c1), maxC = Math.max(c0, c1);
+                for (let r = minR; r <= maxR; r++) {
+                    for (let c = minC; c <= maxC; c++) {
+                        if (r === minR || r === maxR || c === minC || c === maxC) {
+                            cells.push({r, c});
+                        }
+                    }
+                }
+                return cells;
+            };
+
             const saveApiKey = (e) => {
                 e.preventDefault();
                 localStorage.setItem('scooby_gemini_api_key', geminiApiKey);
@@ -196,60 +264,13 @@
                 alert("Klucz API Gemini został zapisany! Zostanie użyty przy kolejnych generacjach.");
             };
 
-            const saveMapToLibrary = () => {
-                if(!mapTitle.trim()) { alert("Najpierw nazwij mapę na górnym pasku!"); return; }
-                const newSavedMap = {
-                    id: Date.now().toString(),
-                    name: mapTitle,
-                    rows: rows,
-                    cols: cols,
-                    data: gridData,
-                    tokens: tokens,
-                    date: new Date().toLocaleString()
-                };
-                const newList = [...savedMapsLibrary, newSavedMap];
-                setSavedMapsLibrary(newList);
-                localStorage.setItem('scooby_saved_maps_list', JSON.stringify(newList));
-                alert(`Mapa "${mapTitle}" została zapisana do Twojej Biblioteki!`);
-            };
-
-            const loadMapFromLibrary = (mapObj) => {
-                if(confirm(`Czy załadować zapisaną mapę: ${mapObj.name}? Niezapisane zmiany na obecnym płótnie przepadną.`)){
-                    setRows(mapObj.rows);
-                    setCols(mapObj.cols);
-                    setGridData(mapObj.data || {});
-                    setMapTitle(mapObj.name);
-                    setTokens(mapObj.tokens || []);
-                    setInspectCell(null);
-                    setShowTemplatesModal(false);
-                    saveToLocal(mapObj.data, mapObj.rows, mapObj.cols, mapObj.name, mapObj.tokens);
-                }
-            };
-
-            const deleteMapFromLibrary = (id, e) => {
-                e.stopPropagation();
-                if(confirm("Usunąć tę mapę ze swojej biblioteki na stałe?")) {
-                    const newList = savedMapsLibrary.filter(m => m.id !== id);
-                    setSavedMapsLibrary(newList);
-                    localStorage.setItem('scooby_saved_maps_list', JSON.stringify(newList));
-                }
-            };
-
-            const getCellKey = (r, c) => `${r}_${c}`;
-
             const generateAINote = async () => {
                 if (!cellLabel) { alert("Podaj najpierw etykietę obiektu (np. 'Zapadnia', 'Szafa')."); return; }
                 
-                const currentApiKey = localStorage.getItem('scooby_gemini_api_key');
-                if(!currentApiKey) {
-                    alert("⚠️ Skonfiguruj Klucz API Gemini w ustawieniach (ikona zębatki), aby korzystać z tej funkcji na GitHub Pages.");
-                    setShowSettingsModal(true);
-                    return;
-                }
-
+                const currentApiKey = localStorage.getItem('scooby_gemini_api_key') || ""; // Can use empty string if on canvas
                 setIsAiNoteLoading(true);
                 try {
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${currentApiKey}`;
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${currentApiKey}`;
                     const prompt = `Jako Mistrz Gry w RPG na podstawie kreskówki Scooby-Doo z lat 70., napisz krótki, klimatyczny i zwięzły opis (max 3-4 zdania) dla obiektu na mapie o nazwie: "${cellLabel}". Jeśli to pułapka lub tajne przejście, wymyśl konkretny mechanizm działania i wymagany test (np. test Zręczności k12 aby uniknąć sieci). Jeśli to zwykła poszlaka, opisz w jaki sposób buduje napięcie. Zachowaj humorystyczny, retro styl dreszczyku emocji.`;
                     
                     const payload = {
@@ -275,19 +296,17 @@
                 e.preventDefault();
                 if (!aiPrompt) return;
 
-                const currentApiKey = localStorage.getItem('scooby_gemini_api_key');
-                if(!currentApiKey) {
-                    alert("⚠️ Skonfiguruj Klucz API Gemini w ustawieniach (ikona zębatki), aby wygenerować mapę.");
-                    setShowSettingsModal(true);
-                    return;
-                }
-
+                const currentApiKey = localStorage.getItem('scooby_gemini_api_key') || "";
                 setIsAiLoading(true);
                 try {
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${currentApiKey}`;
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${currentApiKey}`;
                     
+                    const prompt = `Stwórz układ architektoniczny mapy (planszy kratek ${aiRows}x${aiCols}) dla scenariusza RPG na podstawie opisu: "${aiPrompt}". 
+Zwróć TYLKO układ budynku i terenu: ściany (wall), podłogi (floor), pokoje (room) i drzwi (door).
+Nie dodawaj żadnych pułapek, potworów, poszlak, ani ukrytych przejść. Skup się wyłącznie na architekturze i rzucie z góry. Zwróć dane w formacie JSON zgodnym ze schematem.`;
+
                     const payload = {
-                        contents: [{ parts: [{ text: `Stwórz układ mapy (planszy kratek ${aiRows}x${aiCols}) dla scenariusza RPG Scooby-Doo na podstawie opisu: "${aiPrompt}". Zwróć tylko najważniejsze obiekty (ściany, pokoje, tajemnice, drzwi, pułapki), reszta będzie zwykłą podłogą.` }] }],
+                        contents: [{ parts: [{ text: prompt }] }],
                         generationConfig: {
                             responseMimeType: "application/json",
                             responseSchema: {
@@ -306,8 +325,7 @@
                                     }
                                 }
                             }
-                        },
-                        systemInstruction: { parts: [{ text: "Twój output musi być zgodny z dostarczonym schematem JSON." }] }
+                        }
                     };
                     
                     const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -327,11 +345,6 @@
                                     const cellData = { type: t.type };
                                     if(t.label) cellData.label = t.label;
                                     if(t.note) cellData.note = t.note;
-                                    
-                                    if(t.type === 'trap') { cellData.iconClass = 'fa-solid fa-skull'; cellData.iconColor = '#ef4444'; }
-                                    if(t.type === 'secret') { cellData.iconClass = 'fa-solid fa-eye'; cellData.iconColor = '#60a5fa'; }
-                                    if(t.type === 'door') { cellData.iconClass = 'fa-solid fa-door-closed'; cellData.iconColor = '#d97706'; }
-                                    
                                     newGrid[`${t.r}_${t.c}`] = cellData;
                                 }
                             });
@@ -384,15 +397,53 @@
 
             const handleMouseDown = (r, c) => {
                 if (appMode === 'play') return;
-                setIsDrawing(true); handleCellAction(r, c);
+                
+                if (['line', 'rect', 'hollow_rect'].includes(activeTool)) {
+                    setDragStart({r, c});
+                    setDragCurrent({r, c});
+                } else {
+                    setIsDrawing(true); 
+                    handleCellAction(r, c);
+                }
             };
 
             const handleMouseEnter = (r, c) => {
                 if (appMode === 'play') return;
-                if (isDrawing && activeTool !== 'inspect') handleCellAction(r, c);
+                
+                if (dragStart && ['line', 'rect', 'hollow_rect'].includes(activeTool)) {
+                    setDragCurrent({r, c});
+                } else if (isDrawing && activeTool !== 'inspect') {
+                    handleCellAction(r, c);
+                }
             };
 
-            const handleMouseUp = () => setIsDrawing(false);
+            const handleMouseUp = () => {
+                setIsDrawing(false);
+                
+                if (dragStart && dragCurrent && ['line', 'rect', 'hollow_rect'].includes(activeTool)) {
+                    let cellsToModify = [];
+                    if (activeTool === 'line') cellsToModify = getLineCells(dragStart.r, dragStart.c, dragCurrent.r, dragCurrent.c);
+                    else if (activeTool === 'rect') cellsToModify = getRectCells(dragStart.r, dragStart.c, dragCurrent.r, dragCurrent.c);
+                    else if (activeTool === 'hollow_rect') cellsToModify = getHollowRectCells(dragStart.r, dragStart.c, dragCurrent.r, dragCurrent.c);
+
+                    const newData = { ...gridData };
+                    cellsToModify.forEach(cell => {
+                        const key = getCellKey(cell.r, cell.c);
+                        
+                        if (activeTool === 'erase') {
+                            delete newData[key];
+                        } else {
+                            newData[key] = { ...newData[key], type: activeType };
+                        }
+                    });
+                    
+                    setGridData(newData);
+                    saveToLocal(newData, rows, cols, mapTitle, tokens);
+                }
+                
+                setDragStart(null);
+                setDragCurrent(null);
+            };
 
             const handleAddCustomStamp = (e) => {
                 e.preventDefault();
@@ -404,28 +455,13 @@
                 setNewStampName(''); setNewStampClass('fa-solid fa-star'); setActiveStamp(newStamp);
             };
 
-            const loadTemplate = (template) => {
-                if (confirm(`Czy na pewno chcesz załadować szablon: "${template.name}"?`)) {
-                    setRows(template.rows); setCols(template.cols); setGridData(template.data || {});
-                    setMapTitle(template.name); setInspectCell(null); setShowTemplatesModal(false);
-                    const midR = Math.floor(template.rows / 2); const midC = Math.floor(template.cols / 2);
-                    const gangTokens = SCOOBY_GANG.map((char, index) => ({
-                        id: char.id, name: char.name, color: char.color, r: midR, c: midC - 2 + index
-                    }));
-                    setTokens(gangTokens); setAppMode('play');
-                    saveToLocal(template.data || {}, template.rows, template.cols, template.name, gangTokens);
-                }
+            const toggleTokenSelection = (id, e) => {
+                if (e) e.stopPropagation();
+                setSelectedTokenIds(prev => prev.includes(id) ? prev.filter(tId => tId !== id) : [...prev, id]);
             };
 
-            const saveInspectorData = () => {
-                if (!inspectCell) return;
-                const key = getCellKey(inspectCell.r, inspectCell.c);
-                const newData = { ...gridData };
-                if (!newData[key]) newData[key] = { type: 'floor' };
-                if (cellLabel.trim() === "") delete newData[key].label; else newData[key].label = cellLabel;
-                if (cellNote.trim() === "") delete newData[key].note; else newData[key].note = cellNote;
-                setGridData(newData); saveToLocal(newData, rows, cols, mapTitle, tokens); setInspectCell(null);
-            };
+            const selectAllTokens = () => setSelectedTokenIds(tokens.map(t => t.id));
+            const deselectAllTokens = () => setSelectedTokenIds([]);
 
             const handleAddToken = (e) => {
                 e.preventDefault();
@@ -443,20 +479,6 @@
                 saveToLocal(gridData, rows, cols, mapTitle, newTokens);
             };
 
-            const toggleTokenSelection = (id, e) => {
-                if (e) e.stopPropagation();
-                setSelectedTokenIds(prev => prev.includes(id) ? prev.filter(tId => tId !== id) : [...prev, id]);
-            };
-
-            const selectAllTokens = () => setSelectedTokenIds(tokens.map(t => t.id));
-            const deselectAllTokens = () => setSelectedTokenIds([]);
-
-            const clearMap = () => {
-                if(confirm("Wyczyścić całą mapę?")) {
-                    setGridData({}); setTokens([]); saveToLocal({}, rows, cols, mapTitle, []);
-                }
-            };
-            
             const exportJSON = () => {
                 const dataStr = JSON.stringify({ title: mapTitle, rows, cols, gridData, tokens }, null, 2);
                 const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
@@ -533,13 +555,95 @@
                 link.href = canvas.toDataURL('image/png'); link.click();
             };
 
+            const saveMapToLibrary = () => {
+                if(!mapTitle.trim()) { alert("Najpierw nazwij mapę na górnym pasku!"); return; }
+                const newSavedMap = {
+                    id: Date.now().toString(),
+                    name: mapTitle,
+                    rows: rows,
+                    cols: cols,
+                    data: gridData,
+                    tokens: tokens,
+                    date: new Date().toLocaleString()
+                };
+                const newList = [...savedMapsLibrary, newSavedMap];
+                setSavedMapsLibrary(newList);
+                localStorage.setItem('scooby_saved_maps_list', JSON.stringify(newList));
+                alert(`Mapa "${mapTitle}" została zapisana do Twojej Biblioteki!`);
+            };
+
+            const loadMapFromLibrary = (mapObj) => {
+                if(confirm(`Czy załadować zapisaną mapę: ${mapObj.name}? Niezapisane zmiany na obecnym płótnie przepadną.`)){
+                    setRows(mapObj.rows);
+                    setCols(mapObj.cols);
+                    setGridData(mapObj.data || {});
+                    setMapTitle(mapObj.name);
+                    setTokens(mapObj.tokens || []);
+                    setInspectCell(null);
+                    setShowTemplatesModal(false);
+                    saveToLocal(mapObj.data, mapObj.rows, mapObj.cols, mapObj.name, mapObj.tokens);
+                }
+            };
+
+            const deleteMapFromLibrary = (id, e) => {
+                e.stopPropagation();
+                if(confirm("Usunąć tę mapę ze swojej biblioteki na stałe?")) {
+                    const newList = savedMapsLibrary.filter(m => m.id !== id);
+                    setSavedMapsLibrary(newList);
+                    localStorage.setItem('scooby_saved_maps_list', JSON.stringify(newList));
+                }
+            };
+
+            const loadTemplate = (template) => {
+                if (confirm(`Czy na pewno chcesz załadować szablon: "${template.name}"?`)) {
+                    setRows(template.rows); setCols(template.cols); 
+                    setGridData(template.data ? template.data : {}); // Handle missing data gracefully
+                    setMapTitle(template.name); setInspectCell(null); setShowTemplatesModal(false);
+                    const midR = Math.floor(template.rows / 2); const midC = Math.floor(template.cols / 2);
+                    const gangTokens = SCOOBY_GANG.map((char, index) => ({
+                        id: char.id, name: char.name, color: char.color, r: midR, c: midC - 2 + index
+                    }));
+                    setTokens(gangTokens); setAppMode('play');
+                    saveToLocal(template.data || {}, template.rows, template.cols, template.name, gangTokens);
+                }
+            };
+
+            const clearMap = () => {
+                if(confirm("Czy na pewno chcesz wyczyścić całą mapę (łącznie z postaciami i notatkami)?")) {
+                    setGridData({});
+                    setTokens([]);
+                    saveToLocal({}, rows, cols, mapTitle, []);
+                }
+            };
+
             const renderGrid = () => {
                 const gridElements = [];
+                
+                // Pre-calculate preview cells if dragging a shape
+                let previewCells = new Set();
+                if (dragStart && dragCurrent && ['line', 'rect', 'hollow_rect'].includes(activeTool)) {
+                    let cellsToModify = [];
+                    if (activeTool === 'line') cellsToModify = getLineCells(dragStart.r, dragStart.c, dragCurrent.r, dragCurrent.c);
+                    else if (activeTool === 'rect') cellsToModify = getRectCells(dragStart.r, dragStart.c, dragCurrent.r, dragCurrent.c);
+                    else if (activeTool === 'hollow_rect') cellsToModify = getHollowRectCells(dragStart.r, dragStart.c, dragCurrent.r, dragCurrent.c);
+                    
+                    cellsToModify.forEach(c => previewCells.add(getCellKey(c.r, c.c)));
+                }
+
                 for (let r = 0; r < rows; r++) {
                     for (let c = 0; c < cols; c++) {
-                        const key = getCellKey(r, c); const cell = gridData[key];
+                        const key = getCellKey(r, c); 
+                        const cell = gridData[key];
+                        const isPreview = previewCells.has(key);
+
                         let cellClass = "grid-cell type-floor";
-                        if (cell) cellClass = `grid-cell type-${cell.type}`;
+                        if (isPreview && activeTool !== 'erase') {
+                            cellClass = `grid-cell type-${activeType} opacity-60 outline outline-2 outline-white z-10 scale-[0.95]`;
+                        } else if (isPreview && activeTool === 'erase') {
+                            cellClass = `grid-cell type-floor opacity-50 outline outline-2 outline-red-500 z-10`;
+                        } else if (cell) {
+                            cellClass = `grid-cell type-${cell.type}`;
+                        }
                         
                         const cellTokens = tokens.filter(t => t.r === r && t.c === c);
                         let displayIcon = null; let displayColor = null;
@@ -578,11 +682,12 @@
 
             return (
                 <div className="min-h-screen flex flex-col" onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
+                    {}
                     <header className="bg-slate-900 border-b border-slate-700 p-4 flex flex-wrap justify-between items-center gap-4 shadow-md z-20">
                         <div className="flex items-center gap-4">
                             <i className="fa-solid fa-map-location-dot text-amber-500 text-3xl"></i>
                             <div>
-                                <h1 className="text-xl font-bold text-white leading-tight">Mapy Scooby-Doo RPG</h1>
+                                <h1 className="text-xl font-bold text-white leading-tight">Edytor Architektury Map</h1>
                                 <input type="text" value={mapTitle} onChange={(e) => { setMapTitle(e.target.value); saveToLocal(gridData, rows, cols, e.target.value, tokens); }} className="bg-transparent border-b border-slate-600 text-slate-300 text-sm focus:outline-none focus:border-amber-500 pb-1 w-64" placeholder="Nazwa lokacji..." />
                             </div>
                         </div>
@@ -593,17 +698,17 @@
                             </button>
 
                             <button onClick={() => setShowTemplatesModal(true)} className="px-5 py-2 rounded-md font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-lg border border-emerald-400 transition-all">
-                                <i className="fa-solid fa-folder-open mr-2"></i> Moje Mapy & Szablony
+                                <i className="fa-solid fa-folder-open mr-2"></i> Moje Mapy & Szablony AI
                             </button>
 
                             <div className="h-8 w-px bg-slate-600 mx-1"></div>
 
                             <div className="flex bg-slate-800 rounded-lg p-1 border border-slate-700">
                                 <button onClick={() => setAppMode('edit')} className={`px-4 py-2 rounded-md font-semibold transition-colors ${appMode === 'edit' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}>
-                                    <i className="fa-solid fa-pen-ruler mr-2"></i> Tryb Edytora
+                                    <i className="fa-solid fa-pen-ruler mr-2"></i> Edytor
                                 </button>
                                 <button onClick={() => setAppMode('play')} className={`px-4 py-2 rounded-md font-semibold transition-colors ${appMode === 'play' ? 'bg-amber-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}>
-                                    <i className="fa-solid fa-chess-knight mr-2"></i> Tryb Sesji (Pionki)
+                                    <i className="fa-solid fa-chess-knight mr-2"></i> Pionki
                                 </button>
                             </div>
                         </div>
@@ -613,37 +718,49 @@
                             <label className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded text-sm cursor-pointer transition-colors" title="Wczytaj z pliku dysku"><i className="fa-solid fa-upload mr-1"></i> (JSON)<input type="file" accept=".json" onChange={handleImportJSON} className="hidden" ref={fileInputRef} /></label>
                             <button onClick={exportPNG} className="bg-green-700 hover:bg-green-600 text-white px-3 py-2 rounded text-sm transition-colors" title="Zapisz obrazek"><i className="fa-solid fa-image mr-1"></i> PNG</button>
                             
-                            <button onClick={() => setShowSettingsModal(true)} className="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 px-3 py-2 rounded text-sm transition-colors ml-2" title="Ustawienia API Gemini (GitHub Pages)">
+                            <button onClick={() => setShowSettingsModal(true)} className="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 px-3 py-2 rounded text-sm transition-colors ml-2" title="Ustawienia API Gemini">
                                 <i className="fa-solid fa-gear"></i>
                             </button>
                         </div>
                     </header>
 
                     <div className="flex flex-1 overflow-hidden">
+                        {}
                         <div className="w-[340px] bg-slate-800 border-r border-slate-700 p-4 overflow-y-auto flex flex-col gap-6 shrink-0">
                             {appMode === 'edit' && (
                                 <>
                                     <div className="space-y-2">
-                                        <h3 className="text-sm uppercase tracking-wider text-slate-400 font-bold mb-3">Narzędzia Edycji</h3>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <button onClick={() => setActiveTool('paint')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 ${activeTool === 'paint' ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
-                                                <i className="fa-solid fa-paint-roller text-lg"></i><span className="text-[11px] font-bold">Rysuj Teren</span>
+                                        <h3 className="text-sm uppercase tracking-wider text-slate-400 font-bold mb-2">Narzędzia Edycji</h3>
+                                        <div className="grid grid-cols-4 gap-2">
+                                            <button onClick={() => setActiveTool('paint')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 border border-transparent ${activeTool === 'paint' ? 'bg-indigo-600 text-white shadow-md border-indigo-400' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Pędzel (Pojedyncze kratki)">
+                                                <i className="fa-solid fa-paint-roller text-lg"></i><span className="text-[9px] font-bold">Pędzel</span>
                                             </button>
-                                            <button onClick={() => setActiveTool('stamp')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 ${activeTool === 'stamp' ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
-                                                <i className="fa-solid fa-stamp text-lg"></i><span className="text-[11px] font-bold">Stempel Rekwizytów</span>
+                                            <button onClick={() => setActiveTool('line')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 border border-transparent ${activeTool === 'line' ? 'bg-indigo-600 text-white shadow-md border-indigo-400' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Linia (Przeciągnij)">
+                                                <i className="fa-solid fa-minus text-lg"></i><span className="text-[9px] font-bold">Linia</span>
                                             </button>
-                                            <button onClick={() => setActiveTool('inspect')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 ${activeTool === 'inspect' ? 'bg-amber-600 text-white shadow-md' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
-                                                <i className="fa-solid fa-magnifying-glass text-lg"></i><span className="text-[11px] font-bold">Zbadaj / Notatki</span>
+                                            <button onClick={() => setActiveTool('hollow_rect')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 border border-transparent ${activeTool === 'hollow_rect' ? 'bg-indigo-600 text-white shadow-md border-indigo-400' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Pusty Prostokąt (Ściany budynków)">
+                                                <i className="fa-solid fa-vector-square text-lg"></i><span className="text-[9px] font-bold">Ramka</span>
                                             </button>
-                                            <button onClick={() => setActiveTool('erase')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 ${activeTool === 'erase' ? 'bg-red-600 text-white shadow-md' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
-                                                <i className="fa-solid fa-eraser text-lg"></i><span className="text-[11px] font-bold">Gumka (Usuń)</span>
+                                            <button onClick={() => setActiveTool('rect')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 border border-transparent ${activeTool === 'rect' ? 'bg-indigo-600 text-white shadow-md border-indigo-400' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Pełny Prostokąt (Podłogi pokoi)">
+                                                <i className="fa-solid fa-square text-lg"></i><span className="text-[9px] font-bold">Wypełnij</span>
+                                            </button>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-2 mt-2">
+                                            <button onClick={() => setActiveTool('stamp')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 border border-transparent ${activeTool === 'stamp' ? 'bg-indigo-600 text-white shadow-md border-indigo-400' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
+                                                <i className="fa-solid fa-stamp text-lg"></i><span className="text-[10px] font-bold">Stempel</span>
+                                            </button>
+                                            <button onClick={() => setActiveTool('inspect')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 border border-transparent ${activeTool === 'inspect' ? 'bg-amber-600 text-white shadow-md border-amber-400' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
+                                                <i className="fa-solid fa-magnifying-glass text-lg"></i><span className="text-[10px] font-bold">Zbadaj</span>
+                                            </button>
+                                            <button onClick={() => setActiveTool('erase')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 border border-transparent ${activeTool === 'erase' ? 'bg-red-600 text-white shadow-md border-red-400' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
+                                                <i className="fa-solid fa-eraser text-lg"></i><span className="text-[10px] font-bold">Gumka</span>
                                             </button>
                                         </div>
                                     </div>
 
-                                    {activeTool === 'paint' && (
+                                    {['paint', 'line', 'rect', 'hollow_rect'].includes(activeTool) && (
                                         <div className="space-y-2">
-                                            <h3 className="text-sm uppercase tracking-wider text-slate-400 font-bold mb-3">Rodzaje Terenu</h3>
+                                            <h3 className="text-sm uppercase tracking-wider text-slate-400 font-bold mb-3">Rodzaje Terenu (Architektura)</h3>
                                             <div className="grid grid-cols-2 gap-2">
                                                 {TILE_TYPES.map(t => (
                                                     <button key={t.id} onClick={() => setActiveType(t.id)} className={`p-2 rounded border-2 text-xs text-left flex items-center gap-2 ${activeType === t.id ? 'border-indigo-400 bg-slate-700 text-white' : 'border-transparent bg-slate-700 text-slate-400 hover:bg-slate-600'}`}>
@@ -700,9 +817,10 @@
                                                 <input type="number" min="5" max="120" value={cols} onChange={(e) => {setCols(Math.min(120, parseInt(e.target.value) || 20)); saveToLocal(gridData, rows, Math.min(120, parseInt(e.target.value)||20), mapTitle, tokens);}} className="w-full bg-slate-900 border border-slate-600 rounded p-1.5 text-center font-mono font-bold" />
                                             </div>
                                         </div>
+                                        <p className="text-[9px] text-slate-500 italic">Uwaga: Maksymalny rozmiar to 120x120.</p>
                                         <div>
                                             <label className="text-xs text-slate-400 block mb-1">Przybliżenie mapy: {cellSize}px</label>
-                                            <input type="range" min="16" max="64" value={cellSize} onChange={(e) => setCellSize(parseInt(e.target.value))} className="w-full" />
+                                            <input type="range" min="12" max="64" value={cellSize} onChange={(e) => setCellSize(parseInt(e.target.value))} className="w-full" />
                                         </div>
                                         <button onClick={clearMap} className="w-full mt-2 border border-red-800 text-red-400 hover:bg-red-900 hover:text-white py-2 rounded text-xs font-bold uppercase tracking-wider transition-colors"><i className="fa-solid fa-trash-can mr-1"></i> Wyczyść całą Mapę</button>
                                     </div>
@@ -715,7 +833,7 @@
                                         <h3 className="text-sm uppercase tracking-wider text-amber-500 font-bold mb-1 border-b border-amber-900 pb-2"><i className="fa-solid fa-users mr-2"></i> Zarządzanie Pionkami</h3>
                                         <div className="bg-amber-900/20 border border-amber-800 rounded p-3 text-xs text-amber-100 mb-2 leading-relaxed">
                                             <i className="fa-solid fa-lightbulb text-amber-400 mr-1"></i>
-                                            <strong>Poradnik:</strong> Kliknij pionki z listy, aby je zaznaczyć. Złota obramówka oznacza grupę gotową do przesunięcia. Kliknij w wybraną kratkę na siatce, by przenieść całą grupę.
+                                            <strong>Poradnik:</strong> Zaznacz wiele postaci na liście, a następnie kliknij docelową kratkę na mapie, aby przenieść całą grupę.
                                         </div>
 
                                         <form onSubmit={handleAddToken} className="bg-slate-900 p-3 rounded-lg border border-slate-700 space-y-3 shadow-md">
@@ -747,7 +865,8 @@
                             )}
                         </div>
 
-                        <div className="flex-1 bg-[#1a1a24] overflow-auto p-4 flex flex-col relative">
+                        {}
+                        <div className="flex-1 bg-[#1a1a24] overflow-auto p-4 flex flex-col relative" style={{ cursor: ['line', 'rect', 'hollow_rect'].includes(activeTool) ? 'crosshair' : 'default' }}>
                             <div className="flex-1 flex items-start justify-center relative">
                                 <div className="map-grid" style={{ gridTemplateColumns: `repeat(${cols}, ${cellSize}px)`, gridTemplateRows: `repeat(${rows}, ${cellSize}px)` }}>
                                     {renderGrid()}
@@ -755,6 +874,7 @@
                             </div>
                         </div>
 
+                        {}
                         <div className="w-72 bg-slate-800 border-l border-slate-700 flex flex-col h-full shrink-0">
                             {inspectCell && appMode === 'edit' && (
                                 <div className="p-4 bg-amber-900/20 border-b border-amber-900 shadow-inner">
@@ -802,18 +922,17 @@
                         </div>
                     </div>
 
-                    {/* MODAL: MOJE MAPY, SZABLONY & GENERATOR AI */}
+                    {}
                     {showTemplatesModal && (
                         <div className="modal-overlay" onClick={() => setShowTemplatesModal(false)}>
-                            <div className="bg-slate-800 border border-slate-600 rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                            <div className="bg-slate-800 border border-slate-600 rounded-xl shadow-2xl w-full max-w-5xl flex flex-col" onClick={e => e.stopPropagation()}>
                                 <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-900 rounded-t-xl">
                                     <h2 className="text-xl font-bold text-white"><i className="fa-solid fa-folder-open text-emerald-500 mr-2"></i> Moje Mapy, Szablony & Generator AI</h2>
                                     <button onClick={() => setShowTemplatesModal(false)} className="text-slate-400 hover:text-white text-xl px-2"><i className="fa-solid fa-xmark"></i></button>
                                 </div>
                                 
-                                <div className="p-6 overflow-y-auto bg-slate-800 space-y-8">
+                                <div className="p-6 overflow-y-auto bg-slate-800 space-y-8 h-[80vh]">
                                     
-                                    {/* SEKCJA ZAPISANYCH MAP UŻYTKOWNIKA */}
                                     <div>
                                         <h3 className="text-sm uppercase tracking-wider text-amber-500 font-bold mb-4 border-b border-slate-700 pb-2">
                                             <i className="fa-solid fa-bookmark mr-2"></i> Moja Biblioteka Map (Zapisane w przeglądarce)
@@ -822,7 +941,7 @@
                                         {savedMapsLibrary.length === 0 ? (
                                             <div className="bg-slate-900 border border-dashed border-slate-600 p-6 rounded-lg text-center">
                                                 <i className="fa-solid fa-map text-3xl text-slate-600 mb-2"></i>
-                                                <p className="text-sm text-slate-400">Biblioteka jest pusta. Użyj przycisku "Zapisz do Biblioteki" na górnym pasku, aby zapisać swoją pierwszą mapę!</p>
+                                                <p className="text-sm text-slate-400">Biblioteka jest pusta. Użyj przycisku "Zapisz do Biblioteki" na górnym pasku.</p>
                                             </div>
                                         ) : (
                                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -845,12 +964,11 @@
                                         )}
                                     </div>
 
-                                    {/* AI GENERATOR SECTION */}
                                     <div className="bg-slate-900 p-5 rounded-xl border border-purple-600/50 shadow-lg relative">
-                                        <h3 className="text-lg font-bold text-purple-400 font-fun mb-2 flex items-center gap-2">
-                                            <i className="fa-solid fa-brain"></i> Zaprojektuj Mapę z pomocą AI
+                                        <h3 className="text-lg font-bold text-purple-400 mb-2 flex items-center gap-2">
+                                            <i className="fa-solid fa-brain"></i> Architekt Map z AI (Tylko Rozkład)
                                         </h3>
-                                        <p className="text-xs text-slate-400 mb-4">Opisz lokację, a sztuczna inteligencja Gemini ułoży odpowiednią planszę (wymaga Klucza API w Ustawieniach)!</p>
+                                        <p className="text-xs text-slate-400 mb-4">Opisz budynek, a sztuczna inteligencja Gemini wygeneruje sam rzut architektoniczny (ściany, podłogi, pokoje, drzwi).</p>
                                         
                                         <div className="flex gap-4 mb-3">
                                             <div className="flex-1">
@@ -864,14 +982,13 @@
                                         </div>
 
                                         <form onSubmit={generateAIMap} className="flex gap-3 items-start">
-                                            <textarea className="flex-1 bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-purple-500 outline-none resize-none" rows="2" placeholder="np. Tajemnicza krypta z ukrytym wyjściem i zapadnią..." value={aiPrompt} onChange={e => setAiPrompt(e.target.value)}></textarea>
+                                            <textarea className="flex-1 bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-purple-500 outline-none resize-none" rows="2" placeholder="np. Mroczny układ korytarzy i komnat posiadłości w stylu wiktoriańskim..." value={aiPrompt} onChange={e => setAiPrompt(e.target.value)}></textarea>
                                             <button type="submit" disabled={isAiLoading || !aiPrompt} className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-6 rounded-lg shadow-lg disabled:opacity-50 transition-all flex flex-col items-center gap-1 justify-center min-w-[140px]">
-                                                {isAiLoading ? <><div className="spinner"></div><span className="text-[10px]">Generowanie...</span></> : <><i className="fa-solid fa-wand-magic-sparkles text-lg"></i><span className="text-xs">Generuj Mapę</span></>}
+                                                {isAiLoading ? <><div className="spinner"></div><span className="text-[10px]">Budowanie...</span></> : <><i className="fa-solid fa-wand-magic-sparkles text-lg"></i><span className="text-xs">Generuj Mapę</span></>}
                                             </button>
                                         </form>
                                     </div>
 
-                                    {/* STANDARD PRESETS */}
                                     <div>
                                         <h3 className="text-sm uppercase tracking-wider text-emerald-500 font-bold mb-4 border-b border-slate-700 pb-2">Kanoniczne Szablony Scooby-Doo</h3>
                                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -889,13 +1006,11 @@
                                             ))}
                                         </div>
                                     </div>
-
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* MODAL: USTAWIENIA (KLUCZ API) */}
                     {showSettingsModal && (
                         <div className="modal-overlay" onClick={() => setShowSettingsModal(false)}>
                             <div className="bg-slate-800 border border-slate-600 rounded-xl shadow-2xl w-full max-w-md flex flex-col" onClick={e => e.stopPropagation()}>
@@ -906,24 +1021,16 @@
                                 <div className="p-6">
                                     <h3 className="text-sm font-bold text-amber-500 mb-2">Konfiguracja Klucza API Gemini</h3>
                                     <p className="text-xs text-slate-300 mb-4 leading-relaxed">
-                                        Aby generator map AI oraz opisów działał na GitHub Pages, wpisz swój prywatny darmowy klucz Google Gemini API. Zostanie on zapisany <strong>bezpiecznie tylko w Twojej przeglądarce</strong> (localStorage).
+                                        Aby generator architektoniczny AI oraz opisy pułapek działały na własnym hostingu, wpisz swój prywatny darmowy klucz Google Gemini API. Zostanie on zapisany <strong>bezpiecznie tylko w Twojej przeglądarce</strong> (localStorage).
                                     </p>
                                     <form onSubmit={saveApiKey} className="space-y-4">
                                         <div>
-                                            <input 
-                                                type="password" 
-                                                value={geminiApiKey}
-                                                onChange={e => setGeminiApiKey(e.target.value)}
-                                                placeholder="Wklej klucz (np. AIzaSy...)" 
-                                                className="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:border-amber-500 outline-none font-mono" 
-                                            />
+                                            <input type="password" value={geminiApiKey} onChange={e => setGeminiApiKey(e.target.value)} placeholder="Wklej klucz (np. AIzaSy...)" className="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:border-amber-500 outline-none font-mono" />
                                         </div>
-                                        <button type="submit" className="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 px-4 rounded shadow">
-                                            Zapisz Klucz
-                                        </button>
+                                        <button type="submit" className="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 px-4 rounded shadow">Zapisz Klucz</button>
                                     </form>
                                     <div className="mt-4 pt-4 border-t border-slate-700 text-[10px] text-slate-400 text-center">
-                                        Nie masz klucza? Pobierz go za darmo z <a href="https://aistudio.google.com/" target="_blank" className="text-blue-400 hover:underline">Google AI Studio</a>.
+                                        Pobierz go za darmo z <a href="https://aistudio.google.com/" target="_blank" className="text-blue-400 hover:underline">Google AI Studio</a>.
                                     </div>
                                 </div>
                             </div>
