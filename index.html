@@ -270,7 +270,7 @@
                 const currentApiKey = localStorage.getItem('scooby_gemini_api_key') || ""; // Can use empty string if on canvas
                 setIsAiNoteLoading(true);
                 try {
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${currentApiKey}`;
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${currentApiKey}`;
                     const prompt = `Jako Mistrz Gry w RPG na podstawie kreskówki Scooby-Doo z lat 70., napisz krótki, klimatyczny i zwięzły opis (max 3-4 zdania) dla obiektu na mapie o nazwie: "${cellLabel}". Jeśli to pułapka lub tajne przejście, wymyśl konkretny mechanizm działania i wymagany test (np. test Zręczności k12 aby uniknąć sieci). Jeśli to zwykła poszlaka, opisz w jaki sposób buduje napięcie. Zachowaj humorystyczny, retro styl dreszczyku emocji.`;
                     
                     const payload = {
@@ -287,7 +287,8 @@
                         setCellNote(result.candidates[0].content.parts[0].text);
                     }
                 } catch (error) {
-                    alert("Wystąpił błąd przy łączeniu z AI. Sprawdź konsole.");
+                    console.error("AI Note Error:", error);
+                    alert("Wystąpił błąd przy łączeniu z AI. Sprawdź konsole (F12).");
                 }
                 setIsAiNoteLoading(false);
             };
@@ -299,7 +300,7 @@
                 const currentApiKey = localStorage.getItem('scooby_gemini_api_key') || "";
                 setIsAiLoading(true);
                 try {
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${currentApiKey}`;
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${currentApiKey}`;
                     
                     const prompt = `Stwórz układ architektoniczny mapy (planszy kratek ${aiRows}x${aiCols}) dla scenariusza RPG na podstawie opisu: "${aiPrompt}". 
 Zwróć TYLKO układ budynku i terenu: ściany (wall), podłogi (floor), pokoje (room) i drzwi (door).
@@ -355,7 +356,10 @@ Nie dodawaj żadnych pułapek, potworów, poszlak, ani ukrytych przejść. Skup 
                         setShowTemplatesModal(false); setAiPrompt('');
                         saveToLocal(newGrid, aiRows, aiCols, parsed.mapTitle || aiPrompt, []);
                     }
-                } catch (error) { alert("Wystąpił błąd przy generowaniu mapy."); }
+                } catch (error) { 
+                    console.error("AI Map Error:", error);
+                    alert("Wystąpił błąd przy generowaniu mapy. Sprawdź konsolę (F12)."); 
+                }
                 setIsAiLoading(false);
             };
 
