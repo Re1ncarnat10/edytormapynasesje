@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edytor i Generator Map - Scooby-Doo RPG</title>
+    <title>Edytor Map i Sieć Lokacji - Scooby-Doo RPG</title>
     
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
@@ -12,20 +12,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />
     
     <style>
-        body { background-color: #1a1a24; color: #e2e8f0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .map-grid { display: inline-grid; gap: 1px; background-color: #2d3748; padding: 2px; border: 4px solid #4a5568; border-radius: 4px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); transition: transform 0.2s; }
+        body { background-color: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
+        .map-grid { display: inline-grid; gap: 1px; background-color: #1e293b; padding: 2px; border: 4px solid #334155; border-radius: 4px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         .grid-cell { background-color: #cbd5e1; position: relative; cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .grid-cell:hover::after { content: ''; position: absolute; inset: 0; background-color: rgba(255,255,255,0.2); pointer-events: none; }
         
         .type-floor { background-color: #e2e8f0; }
         .type-wall { background-color: #000000; }
         .type-room { background-color: #f8fafc; border: 1px solid #cbd5e1; }
-        .type-secret { background-color: #1e293b; background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.1) 5px, rgba(255,255,255,0.1) 10px); }
+        .type-secret { background-color: #0f172a; background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.1) 5px, rgba(255,255,255,0.1) 10px); }
         .type-trap { background-color: #7f1d1d; }
         .type-door { background-color: #92400e; }
         
         .icon-layer { position: absolute; font-size: 1.2em; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); z-index: 10; pointer-events: none; }
-        .label-layer { position: absolute; bottom: 2px; right: 2px; font-size: 0.6em; font-weight: bold; color: #fff; text-shadow: 1px 1px 1px #000; z-index: 10; pointer-events: none; background: rgba(0,0,0,0.5); padding: 0 3px; border-radius: 3px; }
+        .label-layer { position: absolute; bottom: 2px; right: 2px; font-size: 0.6em; font-weight: bold; color: #fff; text-shadow: 1px 1px 1px #000; z-index: 10; pointer-events: none; background: rgba(0,0,0,0.8); padding: 0 3px; border-radius: 3px; }
         
         .token { 
             position: absolute; 
@@ -39,24 +39,27 @@
             border: 2px solid white; 
             box-shadow: 0 4px 6px rgba(0,0,0,0.5); 
             cursor: pointer; 
-            transition: all 0.2s; 
+            transition: transform 0.2s; 
             z-index: 20;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
         }
-        .token:hover { transform: scale(1.1); z-index: 25; }
-        .token.selected { outline: 4px solid #fbbf24; outline-offset: 2px; transform: scale(1.15); z-index: 30; }
+        .token:hover { transform: scale(1.1) !important; z-index: 25; }
+        .token.selected { outline: 3px solid #fbbf24; outline-offset: 1px; transform: scale(1.15) !important; z-index: 30; }
 
         .note-indicator { position: absolute; top: 0; left: 0; width: 0; height: 0; border-top: 12px solid #fbbf24; border-right: 12px solid transparent; z-index: 15; }
         
         ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #1a202c; }
-        ::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #718096; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
 
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 50; backdrop-filter: blur(4px); overflow-y:auto; padding: 20px;}
-        
         .spinner { border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 3px solid #fff; width: 16px; height: 16px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Node World Map */
+        .world-node { user-select: none; transition: box-shadow 0.2s; }
+        .world-node:active { cursor: grabbing; box-shadow: 0 15px 30px rgba(0,0,0,0.6); }
     </style>
 </head>
 <body>
@@ -71,125 +74,126 @@
             { id: 'room', name: 'Komnata', color: 'bg-slate-50' },
             { id: 'secret', name: 'Tajna Przestrzeń', color: 'bg-slate-800' },
             { id: 'trap', name: 'Obszar Pułapki', color: 'bg-red-900' },
-            { id: 'door', name: 'Drzwi/Okno', color: 'bg-amber-800' }
+            { id: 'door', name: 'Drzwi/Przejście', color: 'bg-amber-800' }
         ];
 
         const DEFAULT_STAMPS = [
+            { id: 'none', name: 'Brak/Usuń', iconClass: '', color: '', category: 'All' },
             { id: 's_skull', name: 'Czaszka/Pułapka', iconClass: 'fa-solid fa-skull', color: '#ef4444', category: 'Tajemnice' },
             { id: 's_ghost', name: 'Duch/Potwór', iconClass: 'fa-solid fa-ghost', color: '#c084fc', category: 'Tajemnice' },
             { id: 's_key', name: 'Klucz/Zamek', iconClass: 'fa-solid fa-key', color: '#facc15', category: 'Tajemnice' },
             { id: 's_eye', name: 'Poszlaka', iconClass: 'fa-solid fa-eye', color: '#60a5fa', category: 'Tajemnice' },
             { id: 's_door_secret', name: 'Tajne Drzwi', iconClass: 'fa-solid fa-door-closed', color: '#f59e0b', category: 'Tajemnice' },
             { id: 's_stairs', name: 'Schody', iconClass: 'fa-solid fa-stairs', color: '#d1d5db', category: 'Tajemnice' },
-            { id: 's_wrench', name: 'Mechanizm', iconClass: 'fa-solid fa-wrench', color: '#9ca3af', category: 'Tajemnice' },
             
             { id: 's_chair', name: 'Krzesło', iconClass: 'fa-solid fa-chair', color: '#b45309', category: 'Meble' },
             { id: 's_table', name: 'Stolik', iconClass: 'fa-solid fa-table', color: '#92400e', category: 'Meble' },
             { id: 's_desk', name: 'Biurko', iconClass: 'fa-solid fa-computer-desk', color: '#78350f', category: 'Meble' },
             { id: 's_bed', name: 'Łóżko', iconClass: 'fa-solid fa-bed', color: '#93c5fd', category: 'Meble' },
-            { id: 's_box', name: 'Skrzynia', iconClass: 'fa-solid fa-box', color: '#d97706', category: 'Meble' },
-            { id: 's_shelf', name: 'Regał', iconClass: 'fa-solid fa-bars-staggered', color: '#84cc16', category: 'Meble' },
-            { id: 's_bath', name: 'Wanna/Zlew', iconClass: 'fa-solid fa-bath', color: '#67e8f9', category: 'Meble' },
-            { id: 's_couch', name: 'Kanapa', iconClass: 'fa-solid fa-couch', color: '#b91c1c', category: 'Meble' },
             
             { id: 's_frame', name: 'Obraz/Gablota', iconClass: 'fa-solid fa-image', color: '#ca8a04', category: 'Eksponaty' },
             { id: 's_monument', name: 'Posąg/Rzeźba', iconClass: 'fa-solid fa-monument', color: '#94a3b8', category: 'Eksponaty' },
-            { id: 's_bone', name: 'Skamielina', iconClass: 'fa-solid fa-bone', color: '#fde68a', category: 'Eksponaty' },
-            { id: 's_shield', name: 'Zbroja', iconClass: 'fa-solid fa-shield-halved', color: '#cbd5e1', category: 'Eksponaty' },
             { id: 's_ankh', name: 'Artefakt', iconClass: 'fa-solid fa-ankh', color: '#facc15', category: 'Eksponaty' },
-            { id: 's_scroll', name: 'Zwój/Papirus', iconClass: 'fa-solid fa-scroll', color: '#fef08a', category: 'Eksponaty' },
-            { id: 's_sword', name: 'Miecz', iconClass: 'fa-solid fa-khanda', color: '#94a3b8', category: 'Eksponaty' },
-            { id: 's_mask', name: 'Maska', iconClass: 'fa-solid fa-masks-theater', color: '#ef4444', category: 'Eksponaty' },
 
             { id: 's_tree', name: 'Drzewo', iconClass: 'fa-solid fa-tree', color: '#16a34a', category: 'Otoczenie' },
-            { id: 's_water', name: 'Woda/Kałuża', iconClass: 'fa-solid fa-water', color: '#3b82f6', category: 'Otoczenie' },
-            { id: 's_car', name: 'Samochód', iconClass: 'fa-solid fa-car', color: '#14b8a6', category: 'Otoczenie' },
-            { id: 's_fire', name: 'Ogień/Kocioł', iconClass: 'fa-solid fa-fire', color: '#f97316', category: 'Otoczenie' },
-            { id: 's_barrel', name: 'Beczka', iconClass: 'fa-solid fa-oil-well', color: '#57534e', category: 'Otoczenie' }
+            { id: 's_water', name: 'Woda/Kałuża', iconClass: 'fa-solid fa-water', color: '#3b82f6', category: 'Otoczenie' }
         ];
 
-        const SCOOBY_GANG = [
-            { id: 't_fred', name: 'Fred', color: '#3b82f6' },
-            { id: 't_daphne', name: 'Daphne', color: '#a855f7' },
-            { id: 't_velma', name: 'Velma', color: '#ea580c' },
-            { id: 't_shaggy', name: 'Kudłaty', color: '#22c55e' },
-            { id: 't_scooby', name: 'Scooby', color: '#78350f' }
-        ];
+        const getLineCells = (r0, c0, r1, c1) => {
+            let cells = [];
+            let dr = Math.abs(r1 - r0), dc = Math.abs(c1 - c0);
+            let sr = r0 < r1 ? 1 : -1, sc = c0 < c1 ? 1 : -1;
+            let err = (dr > dc ? dr : -dc) / 2, curR = r0, curC = c0;
+            while (true) {
+                cells.push({r: curR, c: curC});
+                if (curR === r1 && curC === c1) break;
+                let e2 = err;
+                if (e2 > -dr) { err -= dc; curR += sr; }
+                if (e2 < dc) { err += dr; curC += sc; }
+            }
+            return cells;
+        };
 
-        const PRESETS = [
-            { name: "1. Dom Wujka - Parter", rows: 15, cols: 20, desc: "Główne wejście, salon i okno balkonowe." },
-            { name: "2. Dom Wujka - Piętro", rows: 15, cols: 20, desc: "Sypialnia wujka i łazienka." },
-            { name: "3. Dom Wujka - Tajna Piwnica", rows: 15, cols: 20, desc: "Miejsce pierwszego spotkania ze Zjawą." },
-            { name: "4. Gabinet Wujka w Muzeum", rows: 15, cols: 15, desc: "Miejsce zaginięcia wujka. Zaskakująco czysto." },
-            { name: "5. Hol Główny i Muzeum", rows: 25, cols: 30, desc: "Szkielet T-Rexa i wejścia do skrzydeł." },
-            { name: "6. Podziemia Muzeum i Kotłownia", rows: 20, cols: 25, desc: "Mroczne korytarze i magazyn rekwizytów." },
-            { name: "7. Pokój Zaworów Wodnych", rows: 12, cols: 15, desc: "Zalane pomieszczenie, więzienie Wujka Velmy." },
-            { name: "8. Biblioteka Miejska", rows: 20, cols: 25, desc: "Regały pełne ksiąg i mikrofilmów." },
-            { name: "9. Archiwum Dokumentów", rows: 15, cols: 20, desc: "Gdzie ukryto akt własności ziemi." },
-            { name: "10. Wielkie Skrzydło Egipskie", rows: 25, cols: 30, desc: "Ekspozycja pełna pułapek." }
-        ];
+        const getRectCells = (r0, c0, r1, c1) => {
+            let cells = [];
+            let minR = Math.min(r0, r1), maxR = Math.max(r0, r1);
+            let minC = Math.min(c0, c1), maxC = Math.max(c0, c1);
+            for (let r = minR; r <= maxR; r++) {
+                for (let c = minC; c <= maxC; c++) {
+                    cells.push({r, c});
+                }
+            }
+            return cells;
+        };
+
+        const getHollowRectCells = (r0, c0, r1, c1) => {
+            let cells = [];
+            let minR = Math.min(r0, r1), maxR = Math.max(r0, r1);
+            let minC = Math.min(c0, c1), maxC = Math.max(c0, c1);
+            for (let r = minR; r <= maxR; r++) {
+                for (let c = minC; c <= maxC; c++) {
+                    if (r === minR || r === maxR || c === minC || c === maxC) cells.push({r, c});
+                }
+            }
+            return cells;
+        };
 
         function App() {
-            const [appMode, setAppMode] = useState('edit'); 
+            const [appMode, setAppMode] = useState('edit'); // 'edit', 'play', 'world'
             const [showTemplatesModal, setShowTemplatesModal] = useState(false);
             const [showSettingsModal, setShowSettingsModal] = useState(false);
             
-            // Map Library State
-            const [savedMapsLibrary, setSavedMapsLibrary] = useState(() => {
-                return JSON.parse(localStorage.getItem('scooby_saved_maps_list') || '[]');
-            });
+            // Map Library & Sync
+            const [savedMapsLibrary, setSavedMapsLibrary] = useState(() => JSON.parse(localStorage.getItem('scooby_saved_maps_list') || '[]'));
+            const currentMapIdRef = useRef(localStorage.getItem('scooby_current_map_id') || null);
 
-            // API Keys
-            const [geminiApiKey, setGeminiApiKey] = useState(() => {
-                return localStorage.getItem('scooby_gemini_api_key') || "";
-            });
-
-            // AI States
+            // API Keys & AI
+            const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('scooby_gemini_api_key') || "");
             const [aiPrompt, setAiPrompt] = useState("");
-            const [aiRows, setAiRows] = useState(30);
-            const [aiCols, setAiCols] = useState(30);
+            const [aiRows, setAiRows] = useState(20);
+            const [aiCols, setAiCols] = useState(20);
             const [isAiLoading, setIsAiLoading] = useState(false);
             const [isAiNoteLoading, setIsAiNoteLoading] = useState(false);
 
-            // Map State
+            // Working Map State
             const [rows, setRows] = useState(20);
             const [cols, setCols] = useState(20);
             const [cellSize, setCellSize] = useState(32);
             const [gridData, setGridData] = useState({});
             const [mapTitle, setMapTitle] = useState("Nowa Mapa Scooby-Doo");
+            const [tokens, setTokens] = useState([]);
             
             // Editor Tools State
-            const [activeTool, setActiveTool] = useState('paint'); // paint, line, rect, hollow_rect, stamp, inspect, erase
-            const [activeType, setActiveType] = useState('floor');
-            
-            // Drag State (for Line and Rect tools)
+            const [activeTool, setActiveTool] = useState('paint'); 
+            const [activeType, setActiveType] = useState('wall');
             const [dragStart, setDragStart] = useState(null);
             const [dragCurrent, setDragCurrent] = useState(null);
             const [isDrawing, setIsDrawing] = useState(false);
 
-            // Custom Stamps State
+            // Custom Stamps
             const [customStamps, setCustomStamps] = useState(() => JSON.parse(localStorage.getItem('scooby_custom_stamps') || '[]'));
             const [stampCategory, setStampCategory] = useState('Tajemnice');
-            const [activeStamp, setActiveStamp] = useState({ id: 'none', iconClass: '', color: '' });
-            const [newStampName, setNewStampName] = useState('');
-            const [newStampClass, setNewStampClass] = useState('fa-solid fa-star');
-            const [newStampColor, setNewStampColor] = useState('#ffffff');
+            const [activeStamp, setActiveStamp] = useState(DEFAULT_STAMPS[0]);
             
             // Inspector State
             const [inspectCell, setInspectCell] = useState(null);
             const [cellLabel, setCellLabel] = useState("");
             const [cellNote, setCellNote] = useState("");
 
-            // Tokens State
-            const [tokens, setTokens] = useState([]);
+            // Play Mode State
             const [selectedTokenIds, setSelectedTokenIds] = useState([]);
             const [newTokenName, setNewTokenName] = useState("");
-            const [newTokenColor, setNewTokenColor] = useState("#ffffff");
+            const [newTokenColor, setNewTokenColor] = useState("#3b82f6");
+
+            // World Map (Sieć Lokacji) State
+            const [worldMapState, setWorldMapState] = useState(() => JSON.parse(localStorage.getItem('scooby_world_map') || '{"nodes":{}, "edges":[]}'));
+            const [worldConnectMode, setWorldConnectMode] = useState(false);
+            const [connectStart, setConnectStart] = useState(null);
+            const [draggingNode, setDraggingNode] = useState(null);
 
             const canvasRef = useRef(null);
             const fileInputRef = useRef(null);
-
-            const allStamps = [{id: 'none', name: 'Brak/Usuń', iconClass: '', color: '', category: 'All'}, ...DEFAULT_STAMPS, ...customStamps];
+            const allStamps = [...DEFAULT_STAMPS, ...customStamps];
 
             useEffect(() => {
                 const savedMap = localStorage.getItem('scooby_saved_map');
@@ -199,176 +203,32 @@
                         setGridData(parsed.gridData || {});
                         setRows(parsed.rows || 20);
                         setCols(parsed.cols || 20);
-                        setMapTitle(parsed.title || "Wczytana Mapa");
+                        setMapTitle(parsed.title || "Nowa Mapa");
                         setTokens(parsed.tokens || []);
-                    } catch (e) { console.error("Error loading saved map"); }
+                    } catch (e) { console.error("Error loading map"); }
                 }
             }, []);
 
             const saveToLocal = (data, r, c, title, tks) => {
                 const state = { gridData: data, rows: r, cols: c, title: title, tokens: tks };
                 localStorage.setItem('scooby_saved_map', JSON.stringify(state));
+                
+                // Auto-Sync with Library if this map has an ID
+                if (currentMapIdRef.current) {
+                    setSavedMapsLibrary(prev => {
+                        const newList = prev.map(m => m.id === currentMapIdRef.current ? { ...m, name: title, rows: r, cols: c, data, tokens: tks, date: new Date().toLocaleString() } : m);
+                        localStorage.setItem('scooby_saved_maps_list', JSON.stringify(newList));
+                        return newList;
+                    });
+                }
             };
 
             const getCellKey = (r, c) => `${r}_${c}`;
 
-            // --- DRAWING ALGORITHMS ---
-            const getLineCells = (r0, c0, r1, c1) => {
-                let cells = [];
-                let dr = Math.abs(r1 - r0);
-                let dc = Math.abs(c1 - c0);
-                let sr = r0 < r1 ? 1 : -1;
-                let sc = c0 < c1 ? 1 : -1;
-                let err = (dr > dc ? dr : -dc) / 2;
-                let curR = r0, curC = c0;
-                while (true) {
-                    cells.push({r: curR, c: curC});
-                    if (curR === r1 && curC === c1) break;
-                    let e2 = err;
-                    if (e2 > -dr) { err -= dc; curR += sr; }
-                    if (e2 < dc) { err += dr; curC += sc; }
-                }
-                return cells;
-            };
-
-            const getRectCells = (r0, c0, r1, c1) => {
-                let cells = [];
-                let minR = Math.min(r0, r1), maxR = Math.max(r0, r1);
-                let minC = Math.min(c0, c1), maxC = Math.max(c0, c1);
-                for (let r = minR; r <= maxR; r++) {
-                    for (let c = minC; c <= maxC; c++) {
-                        cells.push({r, c});
-                    }
-                }
-                return cells;
-            };
-
-            const getHollowRectCells = (r0, c0, r1, c1) => {
-                let cells = [];
-                let minR = Math.min(r0, r1), maxR = Math.max(r0, r1);
-                let minC = Math.min(c0, c1), maxC = Math.max(c0, c1);
-                for (let r = minR; r <= maxR; r++) {
-                    for (let c = minC; c <= maxC; c++) {
-                        if (r === minR || r === maxR || c === minC || c === maxC) {
-                            cells.push({r, c});
-                        }
-                    }
-                }
-                return cells;
-            };
-
-            const saveApiKey = (e) => {
-                e.preventDefault();
-                localStorage.setItem('scooby_gemini_api_key', geminiApiKey);
-                setShowSettingsModal(false);
-                alert("Klucz API Gemini został zapisany! Zostanie użyty przy kolejnych generacjach.");
-            };
-
-            const generateAINote = async () => {
-                if (!cellLabel) { alert("Podaj najpierw etykietę obiektu (np. 'Zapadnia', 'Szafa')."); return; }
-                
-                const currentApiKey = localStorage.getItem('scooby_gemini_api_key') || ""; // Can use empty string if on canvas
-                setIsAiNoteLoading(true);
-                try {
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${currentApiKey}`;
-                    const prompt = `Jako Mistrz Gry w RPG na podstawie kreskówki Scooby-Doo z lat 70., napisz krótki, klimatyczny i zwięzły opis (max 3-4 zdania) dla obiektu na mapie o nazwie: "${cellLabel}". Jeśli to pułapka lub tajne przejście, wymyśl konkretny mechanizm działania i wymagany test (np. test Zręczności k12 aby uniknąć sieci). Jeśli to zwykła poszlaka, opisz w jaki sposób buduje napięcie. Zachowaj humorystyczny, retro styl dreszczyku emocji.`;
-                    
-                    const payload = {
-                        contents: [{ parts: [{ text: prompt }] }],
-                        systemInstruction: { parts: [{ text: "Jesteś ekspertem od gier RPG w świecie Scooby-Doo. Pisz po polsku, zwięźle i z odpowiednim klimatem." }] }
-                    };
-                    
-                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                    const result = await response.json();
-
-                    if(result.error) {
-                        alert(`Błąd API Gemini: ${result.error.message}`);
-                    } else if (result.candidates && result.candidates[0].content) {
-                        setCellNote(result.candidates[0].content.parts[0].text);
-                    }
-                } catch (error) {
-                    console.error("AI Note Error:", error);
-                    alert("Wystąpił błąd przy łączeniu z AI. Sprawdź konsole (F12).");
-                }
-                setIsAiNoteLoading(false);
-            };
-
-            const generateAIMap = async (e) => {
-                e.preventDefault();
-                if (!aiPrompt) return;
-
-                const currentApiKey = localStorage.getItem('scooby_gemini_api_key') || "";
-                setIsAiLoading(true);
-                try {
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${currentApiKey}`;
-                    
-                    const prompt = `Stwórz układ architektoniczny mapy (planszy kratek ${aiRows}x${aiCols}) dla scenariusza RPG na podstawie opisu: "${aiPrompt}". 
-Zwróć TYLKO układ budynku i terenu: ściany (wall), podłogi (floor), pokoje (room) i drzwi (door).
-Nie dodawaj żadnych pułapek, potworów, poszlak, ani ukrytych przejść. Skup się wyłącznie na architekturze i rzucie z góry. Zwróć dane w formacie JSON zgodnym ze schematem.`;
-
-                    const payload = {
-                        contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: {
-                            responseMimeType: "application/json",
-                            responseSchema: {
-                                type: "OBJECT",
-                                properties: {
-                                    mapTitle: { type: "STRING" },
-                                    tiles: {
-                                        type: "ARRAY",
-                                        items: {
-                                            type: "OBJECT",
-                                            properties: {
-                                                r: { type: "INTEGER" }, c: { type: "INTEGER" },
-                                                type: { type: "STRING" }, label: { type: "STRING" }, note: { type: "STRING" }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    };
-                    
-                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                    const result = await response.json();
-                    
-                    if(result.error) {
-                        alert(`Błąd API Gemini: ${result.error.message}`);
-                    } else if (result.candidates && result.candidates[0].content) {
-                        const jsonStr = result.candidates[0].content.parts[0].text;
-                        const cleanedStr = jsonStr.replace(/^```(json)?\s*/i, '').replace(/\s*```$/i, '');
-                        const parsed = JSON.parse(cleanedStr);
-                        
-                        const newGrid = {};
-                        if(parsed.tiles && Array.isArray(parsed.tiles)) {
-                            parsed.tiles.forEach(t => {
-                                if(t.r >= 0 && t.r < aiRows && t.c >= 0 && t.c < aiCols) {
-                                    const cellData = { type: t.type };
-                                    if(t.label) cellData.label = t.label;
-                                    if(t.note) cellData.note = t.note;
-                                    newGrid[`${t.r}_${t.c}`] = cellData;
-                                }
-                            });
-                        }
-                        
-                        setRows(aiRows); setCols(aiCols); setGridData(newGrid);
-                        setMapTitle(parsed.mapTitle || aiPrompt); setTokens([]); setInspectCell(null);
-                        setShowTemplatesModal(false); setAiPrompt('');
-                        saveToLocal(newGrid, aiRows, aiCols, parsed.mapTitle || aiPrompt, []);
-                    }
-                } catch (error) { 
-                    console.error("AI Map Error:", error);
-                    alert("Wystąpił błąd przy generowaniu mapy. Sprawdź konsolę (F12)."); 
-                }
-                setIsAiLoading(false);
-            };
-
             const handleCellAction = (r, c) => {
                 if (appMode === 'play') {
                     if (selectedTokenIds.length > 0) {
-                        const updatedTokens = tokens.map(t => 
-                            selectedTokenIds.includes(t.id) ? { ...t, r, c } : t
-                        );
+                        const updatedTokens = tokens.map(t => selectedTokenIds.includes(t.id) ? { ...t, r, c } : t);
                         setTokens(updatedTokens);
                         saveToLocal(gridData, rows, cols, mapTitle, updatedTokens);
                     }
@@ -378,21 +238,14 @@ Nie dodawaj żadnych pułapek, potworów, poszlak, ani ukrytych przejść. Skup 
                 const key = getCellKey(r, c);
                 const newData = { ...gridData };
 
-                if (activeTool === 'erase') {
-                    delete newData[key];
-                } else if (activeTool === 'paint') {
-                    newData[key] = { ...newData[key], type: activeType };
-                } else if (activeTool === 'stamp') {
-                    if (activeStamp.id === 'none') {
-                        newData[key] = { ...newData[key], type: newData[key]?.type || 'floor', iconClass: null, iconColor: null, icon: null };
-                    } else {
-                        newData[key] = { ...newData[key], type: newData[key]?.type || 'floor', iconClass: activeStamp.iconClass, iconColor: activeStamp.color, icon: null };
-                    }
+                if (activeTool === 'erase') delete newData[key];
+                else if (activeTool === 'paint') newData[key] = { ...newData[key], type: activeType };
+                else if (activeTool === 'line' || activeTool === 'rect' || activeTool === 'hollow_rect') return; // Handled in MouseUp
+                else if (activeTool === 'stamp') {
+                    if (activeStamp.id === 'none') newData[key] = { ...newData[key], type: newData[key]?.type || 'floor', iconClass: null, iconColor: null };
+                    else newData[key] = { ...newData[key], type: newData[key]?.type || 'floor', iconClass: activeStamp.iconClass, iconColor: activeStamp.color };
                 } else if (activeTool === 'inspect') {
-                    setInspectCell({r, c});
-                    setCellLabel(newData[key]?.label || "");
-                    setCellNote(newData[key]?.note || "");
-                    return; 
+                    setInspectCell({r, c}); setCellLabel(newData[key]?.label || ""); setCellNote(newData[key]?.note || ""); return; 
                 }
 
                 setGridData(newData);
@@ -401,29 +254,21 @@ Nie dodawaj żadnych pułapek, potworów, poszlak, ani ukrytych przejść. Skup 
 
             const handleMouseDown = (r, c) => {
                 if (appMode === 'play') return;
-                
                 if (['line', 'rect', 'hollow_rect'].includes(activeTool)) {
-                    setDragStart({r, c});
-                    setDragCurrent({r, c});
+                    setDragStart({r, c}); setDragCurrent({r, c});
                 } else {
-                    setIsDrawing(true); 
-                    handleCellAction(r, c);
+                    setIsDrawing(true); handleCellAction(r, c);
                 }
             };
 
             const handleMouseEnter = (r, c) => {
                 if (appMode === 'play') return;
-                
-                if (dragStart && ['line', 'rect', 'hollow_rect'].includes(activeTool)) {
-                    setDragCurrent({r, c});
-                } else if (isDrawing && activeTool !== 'inspect') {
-                    handleCellAction(r, c);
-                }
+                if (dragStart && ['line', 'rect', 'hollow_rect'].includes(activeTool)) setDragCurrent({r, c});
+                else if (isDrawing && activeTool !== 'inspect') handleCellAction(r, c);
             };
 
             const handleMouseUp = () => {
                 setIsDrawing(false);
-                
                 if (dragStart && dragCurrent && ['line', 'rect', 'hollow_rect'].includes(activeTool)) {
                     let cellsToModify = [];
                     if (activeTool === 'line') cellsToModify = getLineCells(dragStart.r, dragStart.c, dragCurrent.r, dragCurrent.c);
@@ -433,39 +278,124 @@ Nie dodawaj żadnych pułapek, potworów, poszlak, ani ukrytych przejść. Skup 
                     const newData = { ...gridData };
                     cellsToModify.forEach(cell => {
                         const key = getCellKey(cell.r, cell.c);
-                        
-                        if (activeTool === 'erase') {
-                            delete newData[key];
-                        } else {
-                            newData[key] = { ...newData[key], type: activeType };
-                        }
+                        newData[key] = { ...newData[key], type: activeType };
                     });
                     
-                    setGridData(newData);
-                    saveToLocal(newData, rows, cols, mapTitle, tokens);
+                    setGridData(newData); saveToLocal(newData, rows, cols, mapTitle, tokens);
                 }
-                
-                setDragStart(null);
-                setDragCurrent(null);
+                setDragStart(null); setDragCurrent(null);
             };
 
-            const handleAddCustomStamp = (e) => {
+            const generateAIMap = async (e) => {
                 e.preventDefault();
-                if(!newStampName.trim() || !newStampClass.trim()) return;
-                const newStamp = { id: 'custom_' + Date.now(), name: newStampName.trim(), iconClass: newStampClass.trim(), color: newStampColor, category: 'Własne' };
-                const updatedStamps = [...customStamps, newStamp];
-                setCustomStamps(updatedStamps);
-                localStorage.setItem('scooby_custom_stamps', JSON.stringify(updatedStamps));
-                setNewStampName(''); setNewStampClass('fa-solid fa-star'); setActiveStamp(newStamp);
+                if (!aiPrompt) return;
+                const currentApiKey = localStorage.getItem('scooby_gemini_api_key') || "";
+                setIsAiLoading(true);
+                try {
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${currentApiKey}`;
+                    const prompt = `Stwórz układ architektoniczny mapy (plansza ${aiRows}x${aiCols}) dla gry RPG: "${aiPrompt}". Zwróć TYLKO układ architektury: ściany (wall), podłogi (floor), pokoje (room) i drzwi (door). Nie dodawaj ikon, sekretów ani pułapek.`;
+                    const payload = {
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: {
+                            responseMimeType: "application/json",
+                            responseSchema: {
+                                type: "OBJECT",
+                                properties: {
+                                    mapTitle: { type: "STRING" },
+                                    tiles: { type: "ARRAY", items: { type: "OBJECT", properties: { r: { type: "INTEGER" }, c: { type: "INTEGER" }, type: { type: "STRING" } } } }
+                                }
+                            }
+                        }
+                    };
+                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    const result = await response.json();
+                    if(result.error) alert(`Błąd AI: ${result.error.message}`);
+                    else if (result.candidates) {
+                        const parsed = JSON.parse(result.candidates[0].content.parts[0].text.replace(/^```(json)?\s*/i, '').replace(/\s*```$/i, ''));
+                        const newGrid = {};
+                        if(parsed.tiles) {
+                            parsed.tiles.forEach(t => { if(t.r >= 0 && t.r < aiRows && t.c >= 0 && t.c < aiCols) newGrid[`${t.r}_${t.c}`] = { type: t.type }; });
+                        }
+                        setRows(aiRows); setCols(aiCols); setGridData(newGrid); setMapTitle(parsed.mapTitle || aiPrompt); setTokens([]);
+                        // Reset current map id because it's a completely new layout generated
+                        currentMapIdRef.current = null;
+                        localStorage.removeItem('scooby_current_map_id');
+                        saveToLocal(newGrid, aiRows, aiCols, parsed.mapTitle || aiPrompt, []);
+                        setShowTemplatesModal(false); setAiPrompt('');
+                    }
+                } catch (err) { alert("Wystąpił błąd przy generowaniu mapy."); }
+                setIsAiLoading(false);
             };
 
-            const toggleTokenSelection = (id, e) => {
-                if (e) e.stopPropagation();
-                setSelectedTokenIds(prev => prev.includes(id) ? prev.filter(tId => tId !== id) : [...prev, id]);
+            const generateAINote = async () => {
+                if (!cellLabel) { alert("Podaj etykietę obiektu (np. 'Zapadnia')."); return; }
+                const currentApiKey = localStorage.getItem('scooby_gemini_api_key') || ""; 
+                setIsAiNoteLoading(true);
+                try {
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${currentApiKey}`;
+                    const payload = { contents: [{ parts: [{ text: `Dla obiektu na mapie: "${cellLabel}". Opisz krótko pułapkę/mechanizm i test kości. Klimat kreskówki Scooby-Doo z lat 70.` }] }] };
+                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    const result = await response.json();
+                    if(result.error) alert(`Błąd AI: ${result.error.message}`);
+                    else if (result.candidates) setCellNote(result.candidates[0].content.parts[0].text);
+                } catch (err) { alert("Błąd połączenia z AI."); }
+                setIsAiNoteLoading(false);
             };
 
-            const selectAllTokens = () => setSelectedTokenIds(tokens.map(t => t.id));
-            const deselectAllTokens = () => setSelectedTokenIds([]);
+            const saveMapToLibrary = () => {
+                if(!mapTitle.trim()) { alert("Nazwij mapę na górnym pasku!"); return; }
+                const isExisting = currentMapIdRef.current;
+                const mapId = isExisting ? currentMapIdRef.current : Date.now().toString();
+                
+                const mapObj = { id: mapId, name: mapTitle, rows, cols, data: gridData, tokens, date: new Date().toLocaleString() };
+                
+                setSavedMapsLibrary(prev => {
+                    const newList = isExisting ? prev.map(m => m.id === mapId ? mapObj : m) : [...prev, mapObj];
+                    localStorage.setItem('scooby_saved_maps_list', JSON.stringify(newList));
+                    return newList;
+                });
+                
+                if (!isExisting) {
+                    currentMapIdRef.current = mapId;
+                    localStorage.setItem('scooby_current_map_id', mapId);
+                }
+                alert(`Mapa "${mapTitle}" zapisana do Biblioteki!`);
+            };
+
+            const loadMapFromLibrary = (mapObj) => {
+                setRows(mapObj.rows); setCols(mapObj.cols); setGridData(mapObj.data || {}); setMapTitle(mapObj.name); setTokens(mapObj.tokens || []);
+                currentMapIdRef.current = mapObj.id;
+                localStorage.setItem('scooby_current_map_id', mapObj.id);
+                setInspectCell(null); setShowTemplatesModal(false);
+                saveToLocal(mapObj.data, mapObj.rows, mapObj.cols, mapObj.name, mapObj.tokens);
+            };
+
+            const deleteMapFromLibrary = (id, e) => {
+                e.stopPropagation();
+                if(confirm("Usunąć tę mapę z biblioteki? Zniknie z Sieci Lokacji!")) {
+                    setSavedMapsLibrary(prev => {
+                        const newList = prev.filter(m => m.id !== id);
+                        localStorage.setItem('scooby_saved_maps_list', JSON.stringify(newList));
+                        return newList;
+                    });
+                    setWorldMapState(prev => {
+                        const newEdges = prev.edges.filter(edge => edge.from !== id && edge.to !== id);
+                        const newNodes = { ...prev.nodes }; delete newNodes[id];
+                        const newState = { nodes: newNodes, edges: newEdges };
+                        localStorage.setItem('scooby_world_map', JSON.stringify(newState));
+                        return newState;
+                    });
+                    if(currentMapIdRef.current === id) {
+                        currentMapIdRef.current = null; localStorage.removeItem('scooby_current_map_id');
+                    }
+                }
+            };
+
+            const clearMap = () => {
+                if(confirm("Wyczyścić całą mapę (łącznie z postaciami)? Zapis w bibliotece zostanie zaktualizowany.")) {
+                    setGridData({}); setTokens([]); saveToLocal({}, rows, cols, mapTitle, []);
+                }
+            };
 
             const handleAddToken = (e) => {
                 e.preventDefault();
@@ -476,11 +406,78 @@ Nie dodawaj żadnych pułapek, potworów, poszlak, ani ukrytych przejść. Skup 
                 saveToLocal(gridData, rows, cols, mapTitle, newTokens);
             };
 
-            const handleRemoveToken = (id, e) => {
-                e.stopPropagation();
-                const newTokens = tokens.filter(t => t.id !== id);
-                setTokens(newTokens); setSelectedTokenIds(prev => prev.filter(tId => tId !== id));
-                saveToLocal(gridData, rows, cols, mapTitle, newTokens);
+            const transferTokens = (targetMapId) => {
+                if(!targetMapId) return;
+                const tokensToMove = tokens.filter(t => selectedTokenIds.includes(t.id));
+                const tokensToKeep = tokens.filter(t => !selectedTokenIds.includes(t.id));
+                let updatedTargetName = "";
+                
+                setSavedMapsLibrary(prev => {
+                    const newList = prev.map(m => {
+                        if(m.id === targetMapId) {
+                            updatedTargetName = m.name;
+                            // Add tokens, placing them at center roughly
+                            const moved = tokensToMove.map(t => ({...t, r: Math.floor(m.rows/2), c: Math.floor(m.cols/2)}));
+                            return { ...m, tokens: [...(m.tokens || []), ...moved] };
+                        }
+                        if(m.id === currentMapIdRef.current) return { ...m, tokens: tokensToKeep };
+                        return m;
+                    });
+                    localStorage.setItem('scooby_saved_maps_list', JSON.stringify(newList));
+                    return newList;
+                });
+                
+                setTokens(tokensToKeep); setSelectedTokenIds([]);
+                saveToLocal(gridData, rows, cols, mapTitle, tokensToKeep);
+                alert(`Przeniesiono wybrane postacie do mapy: ${updatedTargetName}`);
+            };
+
+            const handleNodeMouseDown = (id, e) => {
+                if(worldConnectMode) {
+                    if(!connectStart) setConnectStart(id);
+                    else {
+                        if(connectStart !== id) {
+                            const label = prompt("Opis połączenia (np. 'Schody w dół', 'Tajne przejście'):", "Przejście");
+                            if(label !== null) {
+                                setWorldMapState(prev => {
+                                    const newState = { ...prev, edges: [...prev.edges, { from: connectStart, to: id, label }] };
+                                    localStorage.setItem('scooby_world_map', JSON.stringify(newState));
+                                    return newState;
+                                });
+                            }
+                        }
+                        setConnectStart(null); setWorldConnectMode(false);
+                    }
+                } else {
+                    setDraggingNode(id);
+                }
+            };
+
+            const handleWorldMouseMove = (e) => {
+                if(draggingNode) {
+                    setWorldMapState(prev => {
+                        const node = prev.nodes[draggingNode] || {x: 100, y: 100};
+                        return { ...prev, nodes: { ...prev.nodes, [draggingNode]: { x: node.x + e.movementX, y: node.y + e.movementY } } };
+                    });
+                }
+            };
+
+            const handleWorldMouseUp = () => {
+                if(draggingNode) {
+                    localStorage.setItem('scooby_world_map', JSON.stringify(worldMapState));
+                    setDraggingNode(null);
+                }
+            };
+
+            const removeEdge = (index) => {
+                if(confirm("Usunąć to połączenie?")) {
+                    setWorldMapState(prev => {
+                        const newEdges = prev.edges.filter((_, i) => i !== index);
+                        const newState = { ...prev, edges: newEdges };
+                        localStorage.setItem('scooby_world_map', JSON.stringify(newState));
+                        return newState;
+                    });
+                }
             };
 
             const exportJSON = () => {
@@ -501,7 +498,10 @@ Nie dodawaj żadnych pułapek, potworów, poszlak, ani ukrytych przejść. Skup 
                         const parsed = JSON.parse(event.target.result);
                         setGridData(parsed.gridData || {}); setRows(parsed.rows || 20); setCols(parsed.cols || 20);
                         setMapTitle(parsed.title || "Zaimportowana Mapa"); setTokens(parsed.tokens || []);
-                    } catch (err) { }
+                        currentMapIdRef.current = null; // Imported maps are "new" until saved
+                        localStorage.removeItem('scooby_current_map_id');
+                        saveToLocal(parsed.gridData || {}, parsed.rows || 20, parsed.cols || 20, parsed.title || "Mapa", parsed.tokens || []);
+                    } catch (err) { alert("Błąd pliku JSON."); }
                 };
                 reader.readAsText(file); e.target.value = null;
             };
@@ -511,32 +511,25 @@ Nie dodawaj żadnych pułapek, potworów, poszlak, ani ukrytych przejść. Skup 
                 const margin = 20; const header = 40;
                 canvas.width = cols * cellSize + margin * 2; canvas.height = rows * cellSize + margin * 2 + header;
                 
-                ctx.fillStyle = '#1a1a24'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = '#ffffff'; ctx.font = '24px sans-serif'; ctx.fillText(mapTitle, margin, margin + 20);
                 
                 const colorMap = { 'floor': '#e2e8f0', 'wall': '#000000', 'room': '#f8fafc', 'secret': '#1e293b', 'trap': '#7f1d1d', 'door': '#92400e' };
 
                 ctx.save(); ctx.translate(margin, margin + header);
-                ctx.fillStyle = '#2d3748'; ctx.fillRect(0, 0, cols * cellSize, rows * cellSize);
+                ctx.fillStyle = '#1e293b'; ctx.fillRect(0, 0, cols * cellSize, rows * cellSize);
 
                 for (let r = 0; r < rows; r++) {
                     for (let c = 0; c < cols; c++) {
                         const cell = gridData[getCellKey(r, c)];
                         const x = c * cellSize; const y = r * cellSize;
-                        ctx.fillStyle = '#4a5568'; ctx.fillRect(x, y, cellSize, cellSize);
+                        ctx.fillStyle = '#334155'; ctx.fillRect(x, y, cellSize, cellSize);
                         
                         const innerX = x + 0.5; const innerY = y + 0.5; const innerS = cellSize - 1;
                         if (cell) {
-                            ctx.fillStyle = colorMap[cell.type] || colorMap['floor'];
-                            ctx.fillRect(innerX, innerY, innerS, innerS);
-                            if (cell.note) {
-                                ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.moveTo(innerX, innerY);
-                                ctx.lineTo(innerX + 10, innerY); ctx.lineTo(innerX, innerY + 10); ctx.fill();
-                            }
-                            if (cell.label && cellSize >= 32) {
-                                ctx.fillStyle = (cell.type === 'wall' || cell.type === 'secret' || cell.type === 'trap' || cell.type === 'door') ? '#ffffff' : '#000000';
-                                ctx.font = '9px sans-serif'; ctx.fillText(cell.label.substring(0, 4), innerX + 2, innerY + innerS - 2);
-                            }
+                            ctx.fillStyle = colorMap[cell.type] || colorMap['floor']; ctx.fillRect(innerX, innerY, innerS, innerS);
+                            if (cell.note) { ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.moveTo(innerX, innerY); ctx.lineTo(innerX + 10, innerY); ctx.lineTo(innerX, innerY + 10); ctx.fill(); }
+                            if (cell.label && cellSize >= 32) { ctx.fillStyle = (cell.type === 'wall' || cell.type === 'secret' || cell.type === 'trap' || cell.type === 'door') ? '#ffffff' : '#000000'; ctx.font = '9px sans-serif'; ctx.fillText(cell.label.substring(0, 4), innerX + 2, innerY + innerS - 2); }
                         } else {
                             ctx.fillStyle = colorMap['floor']; ctx.fillRect(innerX, innerY, innerS, innerS);
                         }
@@ -545,12 +538,10 @@ Nie dodawaj żadnych pułapek, potworów, poszlak, ani ukrytych przejść. Skup 
                 
                 if (appMode === 'play') {
                     tokens.forEach(t => {
-                        const x = t.c * cellSize + cellSize/2; const y = t.r * cellSize + cellSize/2;
-                        const radius = (cellSize/2) - 2;
+                        const x = t.c * cellSize + cellSize/2; const y = t.r * cellSize + cellSize/2; const radius = (cellSize/2) - 2;
                         ctx.beginPath(); ctx.arc(x, y, radius, 0, 2 * Math.PI); ctx.fillStyle = t.color; ctx.fill();
                         ctx.lineWidth = 2; ctx.strokeStyle = '#ffffff'; ctx.stroke();
-                        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                        ctx.fillText(t.name.substring(0, 2).toUpperCase(), x, y);
+                        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(t.name.substring(0, 2).toUpperCase(), x, y);
                     });
                 }
                 ctx.restore();
@@ -559,78 +550,14 @@ Nie dodawaj żadnych pułapek, potworów, poszlak, ani ukrytych przejść. Skup 
                 link.href = canvas.toDataURL('image/png'); link.click();
             };
 
-            const saveMapToLibrary = () => {
-                if(!mapTitle.trim()) { alert("Najpierw nazwij mapę na górnym pasku!"); return; }
-                const newSavedMap = {
-                    id: Date.now().toString(),
-                    name: mapTitle,
-                    rows: rows,
-                    cols: cols,
-                    data: gridData,
-                    tokens: tokens,
-                    date: new Date().toLocaleString()
-                };
-                const newList = [...savedMapsLibrary, newSavedMap];
-                setSavedMapsLibrary(newList);
-                localStorage.setItem('scooby_saved_maps_list', JSON.stringify(newList));
-                alert(`Mapa "${mapTitle}" została zapisana do Twojej Biblioteki!`);
-            };
-
-            const loadMapFromLibrary = (mapObj) => {
-                if(confirm(`Czy załadować zapisaną mapę: ${mapObj.name}? Niezapisane zmiany na obecnym płótnie przepadną.`)){
-                    setRows(mapObj.rows);
-                    setCols(mapObj.cols);
-                    setGridData(mapObj.data || {});
-                    setMapTitle(mapObj.name);
-                    setTokens(mapObj.tokens || []);
-                    setInspectCell(null);
-                    setShowTemplatesModal(false);
-                    saveToLocal(mapObj.data, mapObj.rows, mapObj.cols, mapObj.name, mapObj.tokens);
-                }
-            };
-
-            const deleteMapFromLibrary = (id, e) => {
-                e.stopPropagation();
-                if(confirm("Usunąć tę mapę ze swojej biblioteki na stałe?")) {
-                    const newList = savedMapsLibrary.filter(m => m.id !== id);
-                    setSavedMapsLibrary(newList);
-                    localStorage.setItem('scooby_saved_maps_list', JSON.stringify(newList));
-                }
-            };
-
-            const loadTemplate = (template) => {
-                if (confirm(`Czy na pewno chcesz załadować szablon: "${template.name}"?`)) {
-                    setRows(template.rows); setCols(template.cols); 
-                    setGridData(template.data ? template.data : {}); // Handle missing data gracefully
-                    setMapTitle(template.name); setInspectCell(null); setShowTemplatesModal(false);
-                    const midR = Math.floor(template.rows / 2); const midC = Math.floor(template.cols / 2);
-                    const gangTokens = SCOOBY_GANG.map((char, index) => ({
-                        id: char.id, name: char.name, color: char.color, r: midR, c: midC - 2 + index
-                    }));
-                    setTokens(gangTokens); setAppMode('play');
-                    saveToLocal(template.data || {}, template.rows, template.cols, template.name, gangTokens);
-                }
-            };
-
-            const clearMap = () => {
-                if(confirm("Czy na pewno chcesz wyczyścić całą mapę (łącznie z postaciami i notatkami)?")) {
-                    setGridData({});
-                    setTokens([]);
-                    saveToLocal({}, rows, cols, mapTitle, []);
-                }
-            };
-
             const renderGrid = () => {
                 const gridElements = [];
-                
-                // Pre-calculate preview cells if dragging a shape
                 let previewCells = new Set();
                 if (dragStart && dragCurrent && ['line', 'rect', 'hollow_rect'].includes(activeTool)) {
                     let cellsToModify = [];
                     if (activeTool === 'line') cellsToModify = getLineCells(dragStart.r, dragStart.c, dragCurrent.r, dragCurrent.c);
                     else if (activeTool === 'rect') cellsToModify = getRectCells(dragStart.r, dragStart.c, dragCurrent.r, dragCurrent.c);
                     else if (activeTool === 'hollow_rect') cellsToModify = getHollowRectCells(dragStart.r, dragStart.c, dragCurrent.r, dragCurrent.c);
-                    
                     cellsToModify.forEach(c => previewCells.add(getCellKey(c.r, c.c)));
                 }
 
@@ -641,36 +568,22 @@ Nie dodawaj żadnych pułapek, potworów, poszlak, ani ukrytych przejść. Skup 
                         const isPreview = previewCells.has(key);
 
                         let cellClass = "grid-cell type-floor";
-                        if (isPreview && activeTool !== 'erase') {
-                            cellClass = `grid-cell type-${activeType} opacity-60 outline outline-2 outline-white z-10 scale-[0.95]`;
-                        } else if (isPreview && activeTool === 'erase') {
-                            cellClass = `grid-cell type-floor opacity-50 outline outline-2 outline-red-500 z-10`;
-                        } else if (cell) {
-                            cellClass = `grid-cell type-${cell.type}`;
-                        }
+                        if (isPreview && activeTool !== 'erase') cellClass = `grid-cell type-${activeType} opacity-60 outline outline-2 outline-white z-10 scale-[0.95]`;
+                        else if (isPreview && activeTool === 'erase') cellClass = `grid-cell type-floor opacity-50 outline outline-2 outline-red-500 z-10`;
+                        else if (cell) cellClass = `grid-cell type-${cell.type}`;
                         
                         const cellTokens = tokens.filter(t => t.r === r && t.c === c);
-                        let displayIcon = null; let displayColor = null;
-                        if (cell?.iconClass) { displayIcon = cell.iconClass; displayColor = cell.iconColor; }
 
                         gridElements.push(
-                            <div 
-                                key={key} className={cellClass} style={{ width: cellSize, height: cellSize }}
-                                onMouseDown={() => handleMouseDown(r, c)} onMouseEnter={() => handleMouseEnter(r, c)}
-                                onClick={() => { if(appMode === 'play') handleCellAction(r, c); }}
-                            >
+                            <div key={key} className={cellClass} style={{ width: cellSize, height: cellSize }} onMouseDown={() => handleMouseDown(r, c)} onMouseEnter={() => handleMouseEnter(r, c)} onClick={() => { if(appMode === 'play') handleCellAction(r, c); }}>
                                 {cell?.note && <div className="note-indicator"></div>}
-                                {displayIcon && <div className="icon-layer" style={{ color: displayColor || undefined }}><i className={displayIcon}></i></div>}
+                                {cell?.iconClass && <div className="icon-layer" style={{ color: cell.iconColor }}><i className={cell.iconClass}></i></div>}
                                 {cell?.label && cellSize >= 32 && <div className="label-layer">{cell.label}</div>}
                                 {cellTokens.map((t, idx) => {
                                     const offset = cellTokens.length > 1 ? (idx - (cellTokens.length-1)/2) * 8 : 0;
                                     const tokenSize = Math.max(16, cellSize * 0.7);
                                     return (
-                                    <div 
-                                        key={t.id} className={`token ${selectedTokenIds.includes(t.id) ? 'selected' : ''}`}
-                                        style={{ backgroundColor: t.color, width: tokenSize, height: tokenSize, transform: `translateX(${offset}px) ${selectedTokenIds.includes(t.id) ? 'scale(1.15)' : 'scale(1)'}` }}
-                                        title={t.name} onClick={(e) => toggleTokenSelection(t.id, e)}
-                                    >
+                                    <div key={t.id} className={`token ${selectedTokenIds.includes(t.id) ? 'selected' : ''}`} style={{ backgroundColor: t.color, width: tokenSize, height: tokenSize, transform: `translateX(${offset}px)` }} title={t.name} onClick={(e) => { e.stopPropagation(); setSelectedTokenIds(prev => prev.includes(t.id) ? prev.filter(tid => tid !== t.id) : [...prev, t.id]); }}>
                                         {t.name.substring(0, 2).toUpperCase()}
                                     </div>
                                     );
@@ -685,357 +598,338 @@ Nie dodawaj żadnych pułapek, potworów, poszlak, ani ukrytych przejść. Skup 
             const legendItems = Object.entries(gridData).filter(([_, cell]) => cell.note || cell.label).map(([key, cell]) => { const [r, c] = key.split('_'); return { r, c, ...cell }; });
 
             return (
-                <div className="min-h-screen flex flex-col" onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
-                    {}
-                    <header className="bg-slate-900 border-b border-slate-700 p-4 flex flex-wrap justify-between items-center gap-4 shadow-md z-20">
+                <div className="h-screen flex flex-col" onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
+                    {/* Header */}
+                    <header className="bg-slate-900 border-b border-slate-700 p-4 flex flex-wrap justify-between items-center gap-4 shadow-md z-20 shrink-0">
                         <div className="flex items-center gap-4">
                             <i className="fa-solid fa-map-location-dot text-amber-500 text-3xl"></i>
                             <div>
-                                <h1 className="text-xl font-bold text-white leading-tight">Edytor Architektury Map</h1>
-                                <input type="text" value={mapTitle} onChange={(e) => { setMapTitle(e.target.value); saveToLocal(gridData, rows, cols, e.target.value, tokens); }} className="bg-transparent border-b border-slate-600 text-slate-300 text-sm focus:outline-none focus:border-amber-500 pb-1 w-64" placeholder="Nazwa lokacji..." />
+                                <h1 className="text-lg font-bold text-white leading-tight">Scooby-Doo RPG Edytor</h1>
+                                <input type="text" value={mapTitle} onChange={(e) => { setMapTitle(e.target.value); saveToLocal(gridData, rows, cols, e.target.value, tokens); }} className="bg-transparent border-b border-slate-600 text-slate-300 text-sm focus:outline-none focus:border-amber-500 pb-1 w-64" placeholder="Nazwa mapy..." />
                             </div>
                         </div>
                         
                         <div className="flex items-center gap-3">
                             <button onClick={saveMapToLibrary} className="px-4 py-2 rounded-md font-bold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-600 transition-colors shadow">
-                                <i className="fa-solid fa-bookmark text-amber-400 mr-2"></i> Zapisz do Biblioteki
+                                <i className="fa-solid fa-save text-amber-400 mr-2"></i> Zapisz
                             </button>
 
-                            <button onClick={() => setShowTemplatesModal(true)} className="px-5 py-2 rounded-md font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-lg border border-emerald-400 transition-all">
-                                <i className="fa-solid fa-folder-open mr-2"></i> Moje Mapy & Szablony AI
+                            <button onClick={() => setShowTemplatesModal(true)} className="px-4 py-2 rounded-md font-bold text-white bg-slate-800 hover:bg-slate-700 border border-slate-600 shadow">
+                                <i className="fa-solid fa-book text-emerald-400 mr-2"></i> Biblioteka / AI
                             </button>
 
                             <div className="h-8 w-px bg-slate-600 mx-1"></div>
 
                             <div className="flex bg-slate-800 rounded-lg p-1 border border-slate-700">
-                                <button onClick={() => setAppMode('edit')} className={`px-4 py-2 rounded-md font-semibold transition-colors ${appMode === 'edit' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}>
-                                    <i className="fa-solid fa-pen-ruler mr-2"></i> Edytor
+                                <button onClick={() => setAppMode('edit')} className={`px-4 py-1.5 text-sm rounded font-semibold transition-colors ${appMode === 'edit' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}>
+                                    <i className="fa-solid fa-pen-ruler mr-1"></i> Rysuj
                                 </button>
-                                <button onClick={() => setAppMode('play')} className={`px-4 py-2 rounded-md font-semibold transition-colors ${appMode === 'play' ? 'bg-amber-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}>
-                                    <i className="fa-solid fa-chess-knight mr-2"></i> Pionki
+                                <button onClick={() => setAppMode('play')} className={`px-4 py-1.5 text-sm rounded font-semibold transition-colors ${appMode === 'play' ? 'bg-amber-600 text-white' : 'text-slate-400 hover:text-white'}`}>
+                                    <i className="fa-solid fa-chess-knight mr-1"></i> Pionki
+                                </button>
+                                <button onClick={() => setAppMode('world')} className={`px-4 py-1.5 text-sm rounded font-semibold transition-colors ${appMode === 'world' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'}`}>
+                                    <i className="fa-solid fa-globe mr-1"></i> Sieć Lokacji
                                 </button>
                             </div>
                         </div>
 
                         <div className="flex gap-2">
-                            <button onClick={exportJSON} className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded text-sm transition-colors" title="Zapisz do pliku na dysku"><i className="fa-solid fa-download mr-1"></i> (JSON)</button>
-                            <label className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded text-sm cursor-pointer transition-colors" title="Wczytaj z pliku dysku"><i className="fa-solid fa-upload mr-1"></i> (JSON)<input type="file" accept=".json" onChange={handleImportJSON} className="hidden" ref={fileInputRef} /></label>
-                            <button onClick={exportPNG} className="bg-green-700 hover:bg-green-600 text-white px-3 py-2 rounded text-sm transition-colors" title="Zapisz obrazek"><i className="fa-solid fa-image mr-1"></i> PNG</button>
-                            
-                            <button onClick={() => setShowSettingsModal(true)} className="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 px-3 py-2 rounded text-sm transition-colors ml-2" title="Ustawienia API Gemini">
-                                <i className="fa-solid fa-gear"></i>
-                            </button>
+                            <button onClick={exportJSON} className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded text-xs transition-colors" title="Zapisz JSON"><i className="fa-solid fa-download mr-1"></i> JSON</button>
+                            <label className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded text-xs cursor-pointer transition-colors" title="Wczytaj JSON"><i className="fa-solid fa-upload mr-1"></i> JSON<input type="file" accept=".json" onChange={handleImportJSON} className="hidden" ref={fileInputRef} /></label>
+                            <button onClick={exportPNG} className="bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-1.5 rounded text-xs transition-colors" title="Pobierz Obrazek"><i className="fa-solid fa-image mr-1"></i> PNG</button>
+                            <button onClick={() => setShowSettingsModal(true)} className="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 px-3 py-1.5 rounded text-xs ml-2" title="Klucz API"><i className="fa-solid fa-gear"></i></button>
                         </div>
                     </header>
 
-                    <div className="flex flex-1 overflow-hidden">
-                        {}
-                        <div className="w-[340px] bg-slate-800 border-r border-slate-700 p-4 overflow-y-auto flex flex-col gap-6 shrink-0">
-                            {appMode === 'edit' && (
-                                <>
-                                    <div className="space-y-2">
-                                        <h3 className="text-sm uppercase tracking-wider text-slate-400 font-bold mb-2">Narzędzia Edycji</h3>
-                                        <div className="grid grid-cols-4 gap-2">
-                                            <button onClick={() => setActiveTool('paint')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 border border-transparent ${activeTool === 'paint' ? 'bg-indigo-600 text-white shadow-md border-indigo-400' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Pędzel (Pojedyncze kratki)">
-                                                <i className="fa-solid fa-paint-roller text-lg"></i><span className="text-[9px] font-bold">Pędzel</span>
-                                            </button>
-                                            <button onClick={() => setActiveTool('line')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 border border-transparent ${activeTool === 'line' ? 'bg-indigo-600 text-white shadow-md border-indigo-400' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Linia (Przeciągnij)">
-                                                <i className="fa-solid fa-minus text-lg"></i><span className="text-[9px] font-bold">Linia</span>
-                                            </button>
-                                            <button onClick={() => setActiveTool('hollow_rect')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 border border-transparent ${activeTool === 'hollow_rect' ? 'bg-indigo-600 text-white shadow-md border-indigo-400' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Pusty Prostokąt (Ściany budynków)">
-                                                <i className="fa-solid fa-vector-square text-lg"></i><span className="text-[9px] font-bold">Ramka</span>
-                                            </button>
-                                            <button onClick={() => setActiveTool('rect')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 border border-transparent ${activeTool === 'rect' ? 'bg-indigo-600 text-white shadow-md border-indigo-400' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Pełny Prostokąt (Podłogi pokoi)">
-                                                <i className="fa-solid fa-square text-lg"></i><span className="text-[9px] font-bold">Wypełnij</span>
-                                            </button>
-                                        </div>
-                                        <div className="grid grid-cols-3 gap-2 mt-2">
-                                            <button onClick={() => setActiveTool('stamp')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 border border-transparent ${activeTool === 'stamp' ? 'bg-indigo-600 text-white shadow-md border-indigo-400' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
-                                                <i className="fa-solid fa-stamp text-lg"></i><span className="text-[10px] font-bold">Stempel</span>
-                                            </button>
-                                            <button onClick={() => setActiveTool('inspect')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 border border-transparent ${activeTool === 'inspect' ? 'bg-amber-600 text-white shadow-md border-amber-400' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
-                                                <i className="fa-solid fa-magnifying-glass text-lg"></i><span className="text-[10px] font-bold">Zbadaj</span>
-                                            </button>
-                                            <button onClick={() => setActiveTool('erase')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 border border-transparent ${activeTool === 'erase' ? 'bg-red-600 text-white shadow-md border-red-400' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>
-                                                <i className="fa-solid fa-eraser text-lg"></i><span className="text-[10px] font-bold">Gumka</span>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {['paint', 'line', 'rect', 'hollow_rect'].includes(activeTool) && (
-                                        <div className="space-y-2">
-                                            <h3 className="text-sm uppercase tracking-wider text-slate-400 font-bold mb-3">Rodzaje Terenu (Architektura)</h3>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                {TILE_TYPES.map(t => (
-                                                    <button key={t.id} onClick={() => setActiveType(t.id)} className={`p-2 rounded border-2 text-xs text-left flex items-center gap-2 ${activeType === t.id ? 'border-indigo-400 bg-slate-700 text-white' : 'border-transparent bg-slate-700 text-slate-400 hover:bg-slate-600'}`}>
-                                                        <div className={`w-4 h-4 rounded-sm shadow-sm ${t.color}`}></div><span className="truncate font-semibold">{t.name}</span>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {activeTool === 'stamp' && (
-                                        <div className="space-y-4">
-                                            <div>
-                                                <h3 className="text-sm uppercase tracking-wider text-slate-400 font-bold mb-3">Kategoria Rekwizytów</h3>
-                                                <div className="flex flex-wrap gap-1.5">
-                                                    {['Tajemnice', 'Meble', 'Eksponaty', 'Otoczenie', 'Własne'].map(cat => (
-                                                        <button key={cat} onClick={() => setStampCategory(cat)} className={`px-3 py-1.5 text-[10px] font-bold rounded uppercase transition-colors ${stampCategory === cat ? 'bg-indigo-600 text-white' : 'bg-slate-900 text-slate-400 hover:bg-slate-700'}`}>{cat}</button>
-                                                    ))}
+                    {/* App Modes Container */}
+                    <div className="flex flex-1 overflow-hidden relative">
+                        
+                        {/* ---------------- EDIT & PLAY MODES ---------------- */}
+                        {appMode !== 'world' && (
+                            <>
+                                {/* Left Sidebar */}
+                                <div className="w-[340px] bg-slate-800 border-r border-slate-700 p-4 overflow-y-auto flex flex-col gap-6 shrink-0 z-10 shadow-lg">
+                                    {appMode === 'edit' && (
+                                        <>
+                                            <div className="space-y-2">
+                                                <h3 className="text-sm uppercase tracking-wider text-slate-400 font-bold mb-2">Narzędzia</h3>
+                                                <div className="grid grid-cols-4 gap-2">
+                                                    <button onClick={() => setActiveTool('paint')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 border ${activeTool === 'paint' ? 'bg-indigo-600 border-indigo-400 text-white' : 'bg-slate-700 border-transparent text-slate-300'}`} title="Pędzel"><i className="fa-solid fa-paint-roller"></i><span className="text-[9px] font-bold">Pędzel</span></button>
+                                                    <button onClick={() => setActiveTool('line')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 border ${activeTool === 'line' ? 'bg-indigo-600 border-indigo-400 text-white' : 'bg-slate-700 border-transparent text-slate-300'}`} title="Linia"><i className="fa-solid fa-minus"></i><span className="text-[9px] font-bold">Linia</span></button>
+                                                    <button onClick={() => setActiveTool('hollow_rect')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 border ${activeTool === 'hollow_rect' ? 'bg-indigo-600 border-indigo-400 text-white' : 'bg-slate-700 border-transparent text-slate-300'}`} title="Ramka Pokoju"><i className="fa-solid fa-vector-square"></i><span className="text-[9px] font-bold">Ramka</span></button>
+                                                    <button onClick={() => setActiveTool('rect')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 border ${activeTool === 'rect' ? 'bg-indigo-600 border-indigo-400 text-white' : 'bg-slate-700 border-transparent text-slate-300'}`} title="Wypełnij"><i className="fa-solid fa-square"></i><span className="text-[9px] font-bold">Pełny</span></button>
+                                                </div>
+                                                <div className="grid grid-cols-3 gap-2 mt-2">
+                                                    <button onClick={() => setActiveTool('stamp')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 border ${activeTool === 'stamp' ? 'bg-indigo-600 border-indigo-400 text-white' : 'bg-slate-700 border-transparent text-slate-300'}`}><i className="fa-solid fa-stamp"></i><span className="text-[10px] font-bold">Stempel</span></button>
+                                                    <button onClick={() => setActiveTool('inspect')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 border ${activeTool === 'inspect' ? 'bg-amber-600 border-amber-400 text-white' : 'bg-slate-700 border-transparent text-slate-300'}`}><i className="fa-solid fa-magnifying-glass"></i><span className="text-[10px] font-bold">Zbadaj</span></button>
+                                                    <button onClick={() => setActiveTool('erase')} className={`p-2 rounded flex flex-col items-center justify-center gap-1 border ${activeTool === 'erase' ? 'bg-red-600 border-red-400 text-white' : 'bg-slate-700 border-transparent text-slate-300'}`}><i className="fa-solid fa-eraser"></i><span className="text-[10px] font-bold">Gumka</span></button>
                                                 </div>
                                             </div>
 
-                                            <div className="bg-slate-900 p-2 rounded-lg border border-slate-700 grid grid-cols-4 gap-1.5 max-h-64 overflow-y-auto">
-                                                <button onClick={() => setActiveStamp({ id: 'none', iconClass: '', color: '' })} className={`aspect-square rounded flex items-center justify-center border-2 ${activeStamp.id === 'none' ? 'border-indigo-400 bg-slate-700' : 'border-transparent bg-slate-800 hover:bg-slate-700'}`} title="Usuń sam rekwizyt"><i className="fa-solid fa-ban text-red-500/50"></i></button>
-                                                {allStamps.filter(s => s.category === stampCategory).map(i => (
-                                                    <button key={i.id} onClick={() => setActiveStamp(i)} className={`aspect-square rounded text-xl flex items-center justify-center border-2 ${activeStamp.id === i.id ? 'border-indigo-400 bg-slate-700' : 'border-transparent bg-slate-800 hover:bg-slate-700'}`} title={i.name}><i className={i.iconClass} style={{ color: i.color }}></i></button>
-                                                ))}
+                                            {['paint', 'line', 'rect', 'hollow_rect'].includes(activeTool) && (
+                                                <div className="space-y-2">
+                                                    <h3 className="text-sm uppercase tracking-wider text-slate-400 font-bold mb-3">Teren / Architektura</h3>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        {TILE_TYPES.map(t => (
+                                                            <button key={t.id} onClick={() => setActiveType(t.id)} className={`p-2 rounded border-2 text-xs text-left flex items-center gap-2 ${activeType === t.id ? 'border-indigo-400 bg-slate-700 text-white' : 'border-transparent bg-slate-700 text-slate-400 hover:bg-slate-600'}`}>
+                                                                <div className={`w-4 h-4 rounded-sm shadow-sm ${t.color}`}></div><span className="truncate font-semibold">{t.name}</span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {activeTool === 'stamp' && (
+                                                <div className="space-y-3">
+                                                    <h3 className="text-sm uppercase tracking-wider text-slate-400 font-bold">Rekwizyty</h3>
+                                                    <div className="flex flex-wrap gap-1.5">
+                                                        {['Tajemnice', 'Meble', 'Eksponaty', 'Otoczenie', 'Własne'].map(cat => (
+                                                            <button key={cat} onClick={() => setStampCategory(cat)} className={`px-2 py-1 text-[10px] font-bold rounded uppercase ${stampCategory === cat ? 'bg-indigo-600 text-white' : 'bg-slate-900 text-slate-400'}`}>{cat}</button>
+                                                        ))}
+                                                    </div>
+                                                    <div className="bg-slate-900 p-2 rounded-lg border border-slate-700 grid grid-cols-4 gap-1.5 max-h-64 overflow-y-auto">
+                                                        {allStamps.filter(s => s.category === stampCategory || s.category === 'All').map(i => (
+                                                            <button key={i.id} onClick={() => setActiveStamp(i)} className={`aspect-square rounded text-xl flex items-center justify-center border-2 ${activeStamp.id === i.id ? 'border-indigo-400 bg-slate-700' : 'border-transparent bg-slate-800'}`} title={i.name}><i className={i.iconClass} style={{ color: i.color }}></i></button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div className="space-y-3 pt-4 border-t border-slate-700 mt-auto">
+                                                <h3 className="text-sm uppercase tracking-wider text-slate-400 font-bold">Wymiary (Limit 120x120)</h3>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <div><label className="text-[10px] text-slate-400 block font-bold">Wiersze</label><input type="number" min="5" max="120" value={rows} onChange={(e) => {setRows(parseInt(e.target.value)||20); saveToLocal(gridData, parseInt(e.target.value)||20, cols, mapTitle, tokens);}} className="w-full bg-slate-900 border border-slate-600 rounded p-1 text-center text-sm font-mono text-white" /></div>
+                                                    <div><label className="text-[10px] text-slate-400 block font-bold">Kolumny</label><input type="number" min="5" max="120" value={cols} onChange={(e) => {setCols(parseInt(e.target.value)||20); saveToLocal(gridData, rows, parseInt(e.target.value)||20, mapTitle, tokens);}} className="w-full bg-slate-900 border border-slate-600 rounded p-1 text-center text-sm font-mono text-white" /></div>
+                                                </div>
+                                                <div><label className="text-[10px] text-slate-400 block font-bold">Zoom ({cellSize}px)</label><input type="range" min="16" max="64" value={cellSize} onChange={(e) => setCellSize(parseInt(e.target.value))} className="w-full" /></div>
+                                                <button onClick={clearMap} className="w-full border border-red-800 text-red-400 hover:bg-red-900 hover:text-white py-1.5 rounded text-xs font-bold uppercase transition-colors"><i className="fa-solid fa-trash-can mr-1"></i> Wyczyść Mapę</button>
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {appMode === 'play' && (
+                                        <div className="space-y-4 flex flex-col h-full">
+                                            <h3 className="text-sm uppercase tracking-wider text-amber-500 font-bold mb-1 border-b border-amber-900 pb-2"><i className="fa-solid fa-users mr-2"></i> Pionki i Postacie</h3>
+                                            
+                                            <form onSubmit={handleAddToken} className="bg-slate-900 p-3 rounded-lg border border-slate-700 space-y-3 shadow-md shrink-0">
+                                                <h4 className="text-[11px] font-bold text-slate-300 uppercase">Dodaj nową postać</h4>
+                                                <div><input type="text" value={newTokenName} onChange={e => setNewTokenName(e.target.value)} placeholder="np. Mumia" className="w-full bg-slate-800 border border-slate-600 rounded p-1.5 text-sm text-white outline-none" required /></div>
+                                                <div className="flex gap-2 items-center"><input type="color" value={newTokenColor} onChange={e => setNewTokenColor(e.target.value)} className="bg-transparent border-0 h-8 w-10 cursor-pointer" /><button type="submit" className="flex-1 bg-amber-600 hover:bg-amber-500 text-white text-[11px] py-1.5 rounded font-bold uppercase">Stwórz</button></div>
+                                            </form>
+
+                                            <div className="flex gap-2 shrink-0">
+                                                <button onClick={() => setSelectedTokenIds(tokens.map(t=>t.id))} className="flex-1 bg-slate-700 text-white text-[10px] uppercase py-1.5 rounded font-bold">Wybierz Wszystkie</button>
+                                                <button onClick={() => setSelectedTokenIds([])} className="flex-1 bg-slate-700 text-white text-[10px] uppercase py-1.5 rounded font-bold">Odznacz</button>
                                             </div>
 
-                                            {stampCategory === 'Własne' && (
-                                                <form onSubmit={handleAddCustomStamp} className="bg-slate-900 p-3 rounded-lg border border-slate-700 space-y-3 mt-2">
-                                                    <h4 className="text-xs font-semibold text-teal-400 uppercase tracking-wider">Dodaj Własny Rekwizyt</h4>
-                                                    <div>
-                                                        <input type="text" value={newStampName} onChange={e => setNewStampName(e.target.value)} placeholder="Nazwa (np. Telewizor)" className="w-full bg-slate-800 border border-slate-600 rounded p-1.5 text-xs text-white focus:border-indigo-500 outline-none mb-2" required />
-                                                        <input type="text" value={newStampClass} onChange={e => setNewStampClass(e.target.value)} placeholder="Klasa FontAwesome (fa-solid fa-tv)" className="w-full bg-slate-800 border border-slate-600 rounded p-1.5 text-xs text-white focus:border-indigo-500 outline-none mb-2" required />
-                                                        <div className="flex gap-2 items-center">
-                                                            <input type="color" value={newStampColor} onChange={e => setNewStampColor(e.target.value)} className="bg-transparent border-0 h-8 w-10 cursor-pointer rounded p-0 m-0" />
-                                                            <button type="submit" className="flex-1 bg-teal-600 hover:bg-teal-500 text-white text-[11px] uppercase tracking-wider py-2 rounded font-bold transition-colors">Zapisz Rekwizyt</button>
+                                            {selectedTokenIds.length > 0 && savedMapsLibrary.length > 1 && (
+                                                <div className="bg-purple-900/30 p-3 rounded-lg border border-purple-800 space-y-2 shrink-0">
+                                                    <h4 className="text-[10px] font-bold text-purple-300 uppercase">Przenieś na inną mapę:</h4>
+                                                    <select id="transfer-map" className="w-full bg-slate-800 text-xs p-1.5 rounded text-white border border-slate-600">
+                                                        <option value="">-- Wybierz lokację --</option>
+                                                        {savedMapsLibrary.filter(m => m.id !== currentMapIdRef.current).map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                                                    </select>
+                                                    <button onClick={() => transferTokens(document.getElementById('transfer-map').value)} className="w-full bg-purple-600 hover:bg-purple-500 text-white text-xs py-1.5 rounded font-bold">Transfer / Teleport</button>
+                                                </div>
+                                            )}
+
+                                            <div className="overflow-y-auto flex-1 space-y-1.5 pr-1 mt-2">
+                                                {tokens.map(t => (
+                                                    <div key={t.id} onClick={() => setSelectedTokenIds(prev => prev.includes(t.id) ? prev.filter(id => id !== t.id) : [...prev, t.id])} className={`flex items-center justify-between p-2 rounded cursor-pointer border ${selectedTokenIds.includes(t.id) ? 'bg-slate-700 border-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]' : 'bg-slate-900 border-slate-700'}`}>
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-7 h-7 rounded-full border border-white flex items-center justify-center text-[10px] font-bold text-white shadow-md" style={{ backgroundColor: t.color }}>{t.name.substring(0,2).toUpperCase()}</div>
+                                                            <span className="text-sm font-bold text-white block">{t.name}</span>
                                                         </div>
+                                                        <button onClick={(e) => handleRemoveToken(t.id, e)} className="text-slate-500 hover:text-red-400 px-2 py-1"><i className="fa-solid fa-trash-can"></i></button>
                                                     </div>
-                                                </form>
-                                            )}
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Central Map Canvas */}
+                                <div className="flex-1 bg-[#0f172a] overflow-auto p-4 relative" style={{ cursor: ['line', 'rect', 'hollow_rect'].includes(activeTool) ? 'crosshair' : 'default' }}>
+                                    <div className="flex-1 flex items-start justify-center">
+                                        <div className="map-grid" style={{ gridTemplateColumns: `repeat(${cols}, ${cellSize}px)`, gridTemplateRows: `repeat(${rows}, ${cellSize}px)` }}>
+                                            {renderGrid()}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Right Sidebar (Inspector & Logs) */}
+                                <div className="w-72 bg-slate-800 border-l border-slate-700 flex flex-col shrink-0 z-10 shadow-lg">
+                                    {inspectCell && appMode === 'edit' && (
+                                        <div className="p-4 bg-amber-950/40 border-b border-amber-900 shadow-inner">
+                                            <h3 className="font-bold text-amber-500 mb-2 text-xs uppercase tracking-wider"><i className="fa-solid fa-pen mr-2"></i> Zbadaj Kratkę [{inspectCell.r}, {inspectCell.c}]</h3>
+                                            <div className="space-y-3">
+                                                <div><label className="text-[10px] font-bold text-amber-200 block mb-1">Etykieta</label><input type="text" value={cellLabel} onChange={(e) => setCellLabel(e.target.value)} className="w-full bg-slate-900 border border-slate-600 rounded p-1.5 text-sm text-white" placeholder="np. Sejf, Winda" /></div>
+                                                <div>
+                                                    <div className="flex justify-between items-end mb-1">
+                                                        <label className="text-[10px] font-bold text-amber-200">Notatka</label>
+                                                        <button onClick={generateAINote} disabled={isAiNoteLoading} className="text-[9px] bg-purple-600 hover:bg-purple-500 px-1.5 py-0.5 rounded flex items-center gap-1">{isAiNoteLoading ? <div className="spinner w-2 h-2 border-t-2"></div> : <i className="fa-solid fa-wand-magic-sparkles"></i>} AI</button>
+                                                    </div>
+                                                    <textarea rows="4" value={cellNote} onChange={(e) => setCellNote(e.target.value)} className="w-full bg-slate-900 border border-slate-600 rounded p-1.5 text-xs text-white resize-none" placeholder="Opis mechanizmu, pułapki..."></textarea>
+                                                </div>
+                                                <div className="flex gap-2"><button onClick={saveInspectorData} className="flex-1 bg-amber-600 text-slate-900 text-xs py-1.5 rounded font-bold">Zapisz</button><button onClick={() => setInspectCell(null)} className="flex-1 bg-slate-600 text-white text-xs py-1.5 rounded">Anuluj</button></div>
+                                            </div>
                                         </div>
                                     )}
 
-                                    <div className="space-y-3 pt-4 border-t border-slate-700">
-                                        <h3 className="text-sm uppercase tracking-wider text-slate-400 font-bold">Ustawienia Siatki</h3>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <div>
-                                                <label className="text-[10px] text-slate-400 block mb-1 uppercase font-bold">Wiersze</label>
-                                                <input type="number" min="5" max="120" value={rows} onChange={(e) => {setRows(Math.min(120, parseInt(e.target.value) || 20)); saveToLocal(gridData, Math.min(120, parseInt(e.target.value)||20), cols, mapTitle, tokens);}} className="w-full bg-slate-900 border border-slate-600 rounded p-1.5 text-center font-mono font-bold" />
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] text-slate-400 block mb-1 uppercase font-bold">Kolumny</label>
-                                                <input type="number" min="5" max="120" value={cols} onChange={(e) => {setCols(Math.min(120, parseInt(e.target.value) || 20)); saveToLocal(gridData, rows, Math.min(120, parseInt(e.target.value)||20), mapTitle, tokens);}} className="w-full bg-slate-900 border border-slate-600 rounded p-1.5 text-center font-mono font-bold" />
-                                            </div>
-                                        </div>
-                                        <p className="text-[9px] text-slate-500 italic">Uwaga: Maksymalny rozmiar to 120x120.</p>
-                                        <div>
-                                            <label className="text-xs text-slate-400 block mb-1">Przybliżenie mapy: {cellSize}px</label>
-                                            <input type="range" min="12" max="64" value={cellSize} onChange={(e) => setCellSize(parseInt(e.target.value))} className="w-full" />
-                                        </div>
-                                        <button onClick={clearMap} className="w-full mt-2 border border-red-800 text-red-400 hover:bg-red-900 hover:text-white py-2 rounded text-xs font-bold uppercase tracking-wider transition-colors"><i className="fa-solid fa-trash-can mr-1"></i> Wyczyść całą Mapę</button>
-                                    </div>
-                                </>
-                            )}
-
-                            {appMode === 'play' && (
-                                <>
-                                    <div className="space-y-4 flex-1 flex flex-col">
-                                        <h3 className="text-sm uppercase tracking-wider text-amber-500 font-bold mb-1 border-b border-amber-900 pb-2"><i className="fa-solid fa-users mr-2"></i> Zarządzanie Pionkami</h3>
-                                        <div className="bg-amber-900/20 border border-amber-800 rounded p-3 text-xs text-amber-100 mb-2 leading-relaxed">
-                                            <i className="fa-solid fa-lightbulb text-amber-400 mr-1"></i>
-                                            <strong>Poradnik:</strong> Zaznacz wiele postaci na liście, a następnie kliknij docelową kratkę na mapie, aby przenieść całą grupę.
-                                        </div>
-
-                                        <form onSubmit={handleAddToken} className="bg-slate-900 p-3 rounded-lg border border-slate-700 space-y-3 shadow-md">
-                                            <h4 className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Stwórz nową postać / potwora</h4>
-                                            <div><input type="text" value={newTokenName} onChange={e => setNewTokenName(e.target.value)} placeholder="np. Szeryf, Mumia..." className="w-full bg-slate-800 border border-slate-600 rounded p-1.5 text-sm text-white focus:border-amber-500 outline-none" required /></div>
-                                            <div className="flex gap-2 items-center"><input type="color" value={newTokenColor} onChange={e => setNewTokenColor(e.target.value)} className="bg-transparent border-0 h-8 w-12 cursor-pointer rounded p-0 m-0" /><button type="submit" className="flex-1 bg-amber-600 hover:bg-amber-500 text-white text-[11px] uppercase tracking-wider py-2 rounded font-bold transition-colors">Dodaj na mapę</button></div>
-                                        </form>
-
-                                        <div className="space-y-2 overflow-y-auto flex-1 pr-1 pb-4">
-                                            {tokens.length > 0 && (
-                                                <div className="flex gap-2 mb-2">
-                                                    <button onClick={selectAllTokens} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white text-[10px] uppercase tracking-wider py-1.5 rounded font-bold transition-colors">Wybierz Wszystkie</button>
-                                                    <button onClick={deselectAllTokens} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white text-[10px] uppercase tracking-wider py-1.5 rounded font-bold transition-colors">Odznacz</button>
-                                                </div>
-                                            )}
-                                            {tokens.length === 0 && <p className="text-xs text-slate-500 italic text-center py-4">Brak aktywnych postaci.</p>}
-                                            {tokens.map(t => (
-                                                <div key={t.id} onClick={(e) => toggleTokenSelection(t.id, e)} className={`flex items-center justify-between p-2 rounded cursor-pointer border transition-all ${selectedTokenIds.includes(t.id) ? 'bg-slate-700 border-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.3)]' : 'bg-slate-900 border-slate-700 hover:bg-slate-800'}`}>
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold text-white shadow-md" style={{ backgroundColor: t.color, textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}>{t.name.substring(0,2).toUpperCase()}</div>
-                                                        <div><span className="text-sm font-bold text-white block">{t.name}</span></div>
-                                                    </div>
-                                                    <button onClick={(e) => handleRemoveToken(t.id, e)} className="text-slate-500 hover:text-red-400 p-2" title="Usuń postać"><i className="fa-solid fa-trash-can"></i></button>
+                                    <div className="p-4 flex-1 overflow-y-auto">
+                                        <h3 className="text-sm uppercase tracking-wider text-slate-400 font-bold mb-3 border-b border-slate-700 pb-2"><i className="fa-solid fa-book-journal-whills mr-2"></i> Księga Sekretów MG</h3>
+                                        <div className="space-y-2">
+                                            {legendItems.length === 0 ? <p className="text-xs text-slate-500 italic">Brak opisanych kratek na tej mapie.</p> : 
+                                            legendItems.map((item, idx) => (
+                                                <div key={idx} className="bg-slate-900 p-2.5 rounded border border-slate-700 cursor-pointer hover:border-amber-600 transition-colors" onClick={() => {if(appMode==='edit'){setInspectCell({r: parseInt(item.r), c: parseInt(item.c)}); setCellLabel(item.label || ''); setCellNote(item.note || '');}}}>
+                                                    <div className="text-[11px] text-amber-500 font-bold flex justify-between mb-1 border-b border-slate-800 pb-1"><span>{item.label || "Obiekt"}</span><span className="text-[9px] text-slate-500 bg-slate-800 px-1 rounded">[{item.r}, {item.c}]</span></div>
+                                                    <div className="text-[10px] text-slate-300 leading-relaxed">{item.note || <span className="italic">Brak opisu</span>}</div>
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
-                                </>
-                            )}
-                        </div>
-
-                        {}
-                        <div className="flex-1 bg-[#1a1a24] overflow-auto p-4 flex flex-col relative" style={{ cursor: ['line', 'rect', 'hollow_rect'].includes(activeTool) ? 'crosshair' : 'default' }}>
-                            <div className="flex-1 flex items-start justify-center relative">
-                                <div className="map-grid" style={{ gridTemplateColumns: `repeat(${cols}, ${cellSize}px)`, gridTemplateRows: `repeat(${rows}, ${cellSize}px)` }}>
-                                    {renderGrid()}
                                 </div>
-                            </div>
-                        </div>
+                            </>
+                        )}
 
-                        {}
-                        <div className="w-72 bg-slate-800 border-l border-slate-700 flex flex-col h-full shrink-0">
-                            {inspectCell && appMode === 'edit' && (
-                                <div className="p-4 bg-amber-900/20 border-b border-amber-900 shadow-inner">
-                                    <h3 className="font-bold text-amber-500 mb-2 text-sm uppercase tracking-wider"><i className="fa-solid fa-pen mr-2"></i> Zbadaj Kratkę [{inspectCell.r}, {inspectCell.c}]</h3>
-                                    <div className="space-y-3">
-                                        <div>
-                                            <label className="text-[11px] font-bold text-amber-200 block mb-1 uppercase">Etykieta (krótka nazwa)</label>
-                                            <input type="text" value={cellLabel} onChange={(e) => setCellLabel(e.target.value)} className="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:border-amber-500 outline-none" placeholder="np. Biurko, Zapadnia" />
-                                        </div>
-                                        <div>
-                                            <div className="flex justify-between items-end mb-1">
-                                                <label className="text-[11px] font-bold text-amber-200 uppercase">Notatka / Opis</label>
-                                                <button onClick={generateAINote} disabled={isAiNoteLoading} className="text-[10px] bg-purple-600 hover:bg-purple-500 text-white px-2 py-1 rounded shadow disabled:opacity-50 flex items-center gap-1">
-                                                    {isAiNoteLoading ? <div className="spinner w-3 h-3 border-2 border-t-2"></div> : <i className="fa-solid fa-wand-magic-sparkles"></i>} Opis AI
-                                                </button>
-                                            </div>
-                                            <textarea rows="5" value={cellNote} onChange={(e) => setCellNote(e.target.value)} className="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white resize-none focus:border-amber-500 outline-none" placeholder="np. Pułapka aktywuje się przy złym haśle..."></textarea>
-                                        </div>
-                                        <div className="flex gap-2 pt-1">
-                                            <button onClick={saveInspectorData} className="flex-1 bg-amber-600 hover:bg-amber-500 text-white py-2 rounded text-[11px] uppercase tracking-wider font-bold shadow">Zapisz</button>
-                                            <button onClick={() => setInspectCell(null)} className="flex-1 bg-slate-600 hover:bg-slate-500 text-white py-2 rounded text-[11px] uppercase tracking-wider font-bold shadow">Anuluj</button>
-                                        </div>
-                                    </div>
+                        {/* ---------------- WORLD MAP MODE (SIEĆ LOKACJI) ---------------- */}
+                        {appMode === 'world' && (
+                            <div className="flex-1 bg-[#0f172a] overflow-auto relative" onMouseMove={handleWorldMouseMove} onMouseUp={handleWorldMouseUp} onMouseLeave={handleWorldMouseUp}>
+                                
+                                <div className="absolute top-4 left-4 z-10 flex gap-2">
+                                    <button onClick={() => setWorldConnectMode(!worldConnectMode)} className={`px-4 py-2 text-sm rounded font-bold shadow-lg flex items-center transition-all ${worldConnectMode ? 'bg-amber-500 text-slate-900 scale-105' : 'bg-slate-800 border border-slate-600 text-white hover:bg-slate-700'}`}>
+                                        <i className="fa-solid fa-link mr-2"></i> {worldConnectMode ? 'Kliknij docelową mapę, by połączyć...' : 'Połącz lokacje linią'}
+                                    </button>
                                 </div>
-                            )}
 
-                            <div className="p-4 flex-1 overflow-y-auto">
-                                <h3 className="text-sm uppercase tracking-wider text-slate-400 font-bold mb-3 border-b border-slate-700 pb-2"><i className="fa-solid fa-book-journal-whills mr-2"></i> Dziennik MG (Sekrety)</h3>
-                                <div className="space-y-3">
-                                    {legendItems.length === 0 ? (
-                                        <p className="text-xs text-slate-500 italic leading-relaxed">Brak zapisanych notatek na tej mapie. Użyj narzędzia "Zbadaj".</p>
-                                    ) : (
-                                        legendItems.map((item, idx) => (
-                                            <div key={idx} className="bg-slate-900 p-3 rounded-lg border border-slate-700 relative group cursor-pointer hover:border-amber-600 transition-colors" onClick={() => {if(appMode==='edit'){setInspectCell({r: parseInt(item.r), c: parseInt(item.c)}); setCellLabel(item.label || ''); setCellNote(item.note || '');}}}>
-                                                <div className="text-xs text-amber-500 font-bold mb-1 flex justify-between items-center border-b border-slate-800 pb-1">
-                                                    <span>{item.label || "Nieznany obiekt"}</span>
-                                                    <span className="text-[10px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded font-mono">[{item.r}, {item.c}]</span>
-                                                </div>
-                                                <div className="text-[11px] text-slate-300 leading-relaxed pt-1">{item.note || <span className="italic text-slate-600">Brak opisu MG.</span>}</div>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {}
-                    {showTemplatesModal && (
-                        <div className="modal-overlay" onClick={() => setShowTemplatesModal(false)}>
-                            <div className="bg-slate-800 border border-slate-600 rounded-xl shadow-2xl w-full max-w-5xl flex flex-col" onClick={e => e.stopPropagation()}>
-                                <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-900 rounded-t-xl">
-                                    <h2 className="text-xl font-bold text-white"><i className="fa-solid fa-folder-open text-emerald-500 mr-2"></i> Moje Mapy, Szablony & Generator AI</h2>
-                                    <button onClick={() => setShowTemplatesModal(false)} className="text-slate-400 hover:text-white text-xl px-2"><i className="fa-solid fa-xmark"></i></button>
+                                <div className="absolute top-4 right-4 z-10 bg-slate-900/80 p-3 rounded-lg border border-slate-700 text-xs text-slate-300 shadow-xl backdrop-blur">
+                                    <h4 className="font-bold text-purple-400 mb-1 border-b border-slate-700 pb-1">Jak używać Sieci Lokacji?</h4>
+                                    <ul className="space-y-1 mt-2">
+                                        <li><i className="fa-solid fa-arrows-up-down-left-right w-4 text-center"></i> <strong>Przeciągaj</strong> karty, by układać piętra.</li>
+                                        <li><i className="fa-solid fa-link w-4 text-center text-amber-400"></i> Użyj <strong>Połącz</strong> by narysować przejście.</li>
+                                        <li><i className="fa-solid fa-folder-open w-4 text-center text-emerald-400"></i> Kliknij <strong>Wczytaj</strong>, by przenieść się do edycji.</li>
+                                    </ul>
                                 </div>
                                 
-                                <div className="p-6 overflow-y-auto bg-slate-800 space-y-8 h-[80vh]">
-                                    
-                                    <div>
-                                        <h3 className="text-sm uppercase tracking-wider text-amber-500 font-bold mb-4 border-b border-slate-700 pb-2">
-                                            <i className="fa-solid fa-bookmark mr-2"></i> Moja Biblioteka Map (Zapisane w przeglądarce)
-                                        </h3>
-                                        
-                                        {savedMapsLibrary.length === 0 ? (
-                                            <div className="bg-slate-900 border border-dashed border-slate-600 p-6 rounded-lg text-center">
-                                                <i className="fa-solid fa-map text-3xl text-slate-600 mb-2"></i>
-                                                <p className="text-sm text-slate-400">Biblioteka jest pusta. Użyj przycisku "Zapisz do Biblioteki" na górnym pasku.</p>
+                                <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ minWidth: 3000, minHeight: 3000 }}>
+                                    {worldMapState.edges.map((edge, idx) => {
+                                        const n1 = worldMapState.nodes[edge.from] || {x: 100, y: 100};
+                                        const n2 = worldMapState.nodes[edge.to] || {x: 300, y: 100};
+                                        const x1 = n1.x + 110, y1 = n1.y + 40;
+                                        const x2 = n2.x + 110, y2 = n2.y + 40;
+                                        return (
+                                            <g key={idx} className="pointer-events-auto cursor-pointer" onClick={() => removeEdge(idx)}>
+                                                <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#8b5cf6" strokeWidth="3" strokeDasharray="6,6" className="opacity-60 hover:opacity-100 transition-opacity" />
+                                                <rect x={(x1+x2)/2 - (edge.label.length*3 + 10)} y={(y1+y2)/2 - 12} width={edge.label.length*6 + 20} height="20" fill="#1e293b" rx="4" stroke="#8b5cf6" />
+                                                <text x={(x1+x2)/2} y={(y1+y2)/2 + 3} fill="#e2e8f0" fontSize="10" fontWeight="bold" textAnchor="middle">{edge.label}</text>
+                                            </g>
+                                        )
+                                    })}
+                                    {worldConnectMode && connectStart && worldMapState.nodes[connectStart] && (
+                                        <g>
+                                            <circle cx={worldMapState.nodes[connectStart].x + 110} cy={worldMapState.nodes[connectStart].y + 40} r="6" fill="#fbbf24" className="animate-ping" />
+                                        </g>
+                                    )}
+                                </svg>
+                                
+                                <div style={{ minWidth: 3000, minHeight: 3000, position: 'relative' }}>
+                                    {savedMapsLibrary.map((map, idx) => {
+                                        const pos = worldMapState.nodes[map.id] || {x: 50 + (idx%4)*250, y: 100 + Math.floor(idx/4)*150};
+                                        return (
+                                            <div key={map.id} 
+                                                 className={`absolute w-56 bg-slate-800 rounded-xl shadow-2xl world-node border-2 ${connectStart === map.id ? 'border-amber-500 scale-105' : currentMapIdRef.current === map.id ? 'border-emerald-500' : 'border-slate-600'}`}
+                                                 style={{ left: pos.x, top: pos.y }}
+                                                 onMouseDown={(e) => handleNodeMouseDown(map.id, e)}>
+                                                <div className="bg-slate-900 p-2.5 rounded-t-xl border-b border-slate-700 flex justify-between items-center cursor-grab active:cursor-grabbing">
+                                                    <h4 className="text-xs font-bold text-white truncate w-36" title={map.name}>{map.name}</h4>
+                                                    <button onClick={(e) => { e.stopPropagation(); loadMapFromLibrary(map); setAppMode('play'); }} className="text-[10px] bg-emerald-600 hover:bg-emerald-500 px-2 py-1 rounded text-white shrink-0 font-bold transition-colors">Wczytaj</button>
+                                                </div>
+                                                <div className="p-2.5 flex flex-wrap gap-1.5 bg-slate-800 rounded-b-xl min-h-[44px] items-center cursor-grab active:cursor-grabbing">
+                                                    {map.tokens && map.tokens.length > 0 ? map.tokens.map(t => (
+                                                        <div key={t.id} className="w-6 h-6 rounded-full border border-white flex items-center justify-center text-[9px] font-bold text-white shadow" style={{ backgroundColor: t.color }} title={t.name}>
+                                                            {t.name.substring(0,2).toUpperCase()}
+                                                        </div>
+                                                    )) : <span className="text-[10px] text-slate-500 italic w-full text-center">Brak pionków w lokacji</span>}
+                                                </div>
+                                                {currentMapIdRef.current === map.id && (
+                                                    <div className="absolute -top-3 -right-3 bg-emerald-500 text-slate-900 text-[9px] font-bold px-2 py-0.5 rounded-full shadow-md">AKTYWNA</div>
+                                                )}
                                             </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* MODAL: BIBLIOTEKA & AI */}
+                    {showTemplatesModal && (
+                        <div className="modal-overlay" onClick={() => setShowTemplatesModal(false)}>
+                            <div className="bg-slate-800 border border-slate-600 rounded-xl shadow-2xl w-full max-w-5xl flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+                                <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-900 rounded-t-xl">
+                                    <h2 className="text-xl font-bold text-white"><i className="fa-solid fa-book text-emerald-500 mr-2"></i> Biblioteka Map i Generator AI</h2>
+                                    <button onClick={() => setShowTemplatesModal(false)} className="text-slate-400 hover:text-white text-xl px-2"><i className="fa-solid fa-xmark"></i></button>
+                                </div>
+                                <div className="p-6 overflow-y-auto space-y-6">
+                                    
+                                    {/* Library Section */}
+                                    <div>
+                                        <h3 className="text-sm uppercase tracking-wider text-amber-500 font-bold mb-3 border-b border-slate-700 pb-2"><i className="fa-solid fa-bookmark mr-2"></i> Zapisane Lokacje w Przeglądarce</h3>
+                                        {savedMapsLibrary.length === 0 ? (
+                                            <p className="text-xs text-slate-400 italic">Brak zapisanych map. Użyj przycisku Zapisz na górnym pasku.</p>
                                         ) : (
-                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                                {savedMapsLibrary.map((m) => (
-                                                    <div key={m.id} className="bg-slate-900 border border-amber-900/50 rounded-lg p-4 hover:border-amber-500 cursor-pointer transition-all hover:bg-slate-800 flex flex-col justify-between shadow-md group">
+                                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                                {savedMapsLibrary.map(m => (
+                                                    <div key={m.id} className="bg-slate-900 border border-slate-700 rounded-lg p-3 flex flex-col justify-between group hover:border-amber-500 transition-colors">
                                                         <div>
-                                                            <div className="flex justify-between items-start mb-2">
-                                                                <h3 className="font-bold text-amber-400 text-base leading-tight pr-4">{m.name}</h3>
+                                                            <div className="flex justify-between items-start">
+                                                                <h4 className="font-bold text-amber-400 text-sm truncate">{m.name}</h4>
                                                                 <button onClick={(e) => deleteMapFromLibrary(m.id, e)} className="text-slate-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><i className="fa-solid fa-trash-can"></i></button>
                                                             </div>
-                                                            <p className="text-[10px] text-slate-400 font-mono mb-3">Zapisano: {m.date}</p>
+                                                            <p className="text-[9px] text-slate-500 mt-1">{m.cols}x{m.rows} kratek • Pionków: {m.tokens ? m.tokens.length : 0}</p>
                                                         </div>
-                                                        <div className="flex justify-between items-center border-t border-slate-700 pt-3 mt-2">
-                                                            <span className="text-[11px] text-slate-400 font-mono font-bold bg-slate-800 px-2 py-1 rounded"><i className="fa-solid fa-border-all mr-1"></i> {m.cols}x{m.rows}</span>
-                                                            <button onClick={() => loadMapFromLibrary(m)} className="bg-amber-700 hover:bg-amber-600 text-white text-xs px-3 py-1.5 rounded uppercase font-bold shadow">Wczytaj</button>
-                                                        </div>
+                                                        <button onClick={() => loadMapFromLibrary(m)} className="mt-3 w-full bg-slate-700 hover:bg-slate-600 text-white text-[10px] uppercase font-bold py-1.5 rounded transition-colors">Wczytaj Mapę</button>
                                                     </div>
                                                 ))}
                                             </div>
                                         )}
                                     </div>
 
-                                    <div className="bg-slate-900 p-5 rounded-xl border border-purple-600/50 shadow-lg relative">
-                                        <h3 className="text-lg font-bold text-purple-400 mb-2 flex items-center gap-2">
-                                            <i className="fa-solid fa-brain"></i> Architekt Map z AI (Tylko Rozkład)
-                                        </h3>
-                                        <p className="text-xs text-slate-400 mb-4">Opisz budynek, a sztuczna inteligencja Gemini wygeneruje sam rzut architektoniczny (ściany, podłogi, pokoje, drzwi).</p>
+                                    {/* AI Section */}
+                                    <div className="bg-purple-900/20 p-5 rounded-xl border border-purple-800 shadow-inner">
+                                        <h3 className="text-lg font-bold text-purple-400 mb-2"><i className="fa-solid fa-brain mr-2"></i> Generator Architektury z Gemini AI</h3>
+                                        <p className="text-xs text-slate-300 mb-4">Wpisz prompt (np. <i>'Mroczna willa z 4 sypialniami i długim korytarzem'</i>). AI stworzy kompletny układ podłóg, ścian i drzwi.</p>
                                         
-                                        <div className="flex gap-4 mb-3">
-                                            <div className="flex-1">
-                                                <label className="text-[10px] uppercase text-slate-400 font-bold mb-1 block">Wiersze</label>
-                                                <input type="number" min="10" max="60" value={aiRows} onChange={e => setAiRows(Math.min(60, parseInt(e.target.value) || 20))} className="w-full bg-slate-950 border border-slate-700 rounded p-1.5 text-white text-sm" />
+                                        <form onSubmit={generateAIMap} className="space-y-3">
+                                            <div className="flex gap-3">
+                                                <div className="w-24"><label className="text-[10px] text-slate-400 font-bold">Wiersze</label><input type="number" min="10" max="60" value={aiRows} onChange={e => setAiRows(parseInt(e.target.value)||20)} className="w-full bg-slate-950 border border-slate-700 rounded p-1.5 text-sm text-white" /></div>
+                                                <div className="w-24"><label className="text-[10px] text-slate-400 font-bold">Kolumny</label><input type="number" min="10" max="60" value={aiCols} onChange={e => setAiCols(parseInt(e.target.value)||20)} className="w-full bg-slate-950 border border-slate-700 rounded p-1.5 text-sm text-white" /></div>
                                             </div>
-                                            <div className="flex-1">
-                                                <label className="text-[10px] uppercase text-slate-400 font-bold mb-1 block">Kolumny</label>
-                                                <input type="number" min="10" max="60" value={aiCols} onChange={e => setAiCols(Math.min(60, parseInt(e.target.value) || 20))} className="w-full bg-slate-950 border border-slate-700 rounded p-1.5 text-white text-sm" />
+                                            <div className="flex gap-3 items-stretch">
+                                                <textarea value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} rows="2" className="flex-1 bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:border-purple-500 outline-none resize-none" placeholder="Opisz wizję budynku..." required></textarea>
+                                                <button type="submit" disabled={isAiLoading} className="bg-purple-600 hover:bg-purple-500 text-white font-bold px-6 rounded-lg disabled:opacity-50 flex items-center justify-center min-w-[140px]">
+                                                    {isAiLoading ? <><div className="spinner mr-2"></div><span className="text-xs">Rysowanie...</span></> : <><i className="fa-solid fa-wand-magic-sparkles mr-2"></i><span className="text-sm">Generuj</span></>}
+                                                </button>
                                             </div>
-                                        </div>
-
-                                        <form onSubmit={generateAIMap} className="flex gap-3 items-start">
-                                            <textarea className="flex-1 bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm text-white focus:border-purple-500 outline-none resize-none" rows="2" placeholder="np. Mroczny układ korytarzy i komnat posiadłości w stylu wiktoriańskim..." value={aiPrompt} onChange={e => setAiPrompt(e.target.value)}></textarea>
-                                            <button type="submit" disabled={isAiLoading || !aiPrompt} className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-6 rounded-lg shadow-lg disabled:opacity-50 transition-all flex flex-col items-center gap-1 justify-center min-w-[140px]">
-                                                {isAiLoading ? <><div className="spinner"></div><span className="text-[10px]">Budowanie...</span></> : <><i className="fa-solid fa-wand-magic-sparkles text-lg"></i><span className="text-xs">Generuj Mapę</span></>}
-                                            </button>
                                         </form>
                                     </div>
 
-                                    <div>
-                                        <h3 className="text-sm uppercase tracking-wider text-emerald-500 font-bold mb-4 border-b border-slate-700 pb-2">Kanoniczne Szablony Scooby-Doo</h3>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                            {PRESETS.map((p, idx) => (
-                                                <div key={idx} className="bg-slate-900 border border-slate-700 rounded-lg p-4 hover:border-emerald-500 cursor-pointer transition-all hover:bg-slate-800 flex flex-col justify-between shadow-md" onClick={() => loadTemplate(p)}>
-                                                    <div>
-                                                        <h3 className="font-bold text-emerald-400 text-base leading-tight mb-1">{p.name}</h3>
-                                                        <p className="text-xs text-slate-400 mb-3">{p.desc}</p>
-                                                    </div>
-                                                    <div className="flex justify-between items-center border-t border-slate-700 pt-3 mt-2">
-                                                        <span className="text-[11px] text-slate-400 font-mono font-bold bg-slate-800 px-2 py-1 rounded"><i className="fa-solid fa-border-all mr-1"></i> {p.cols}x{p.rows} kratek</span>
-                                                        <button className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded uppercase tracking-wider font-bold shadow-md">Wczytaj</button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
                     )}
 
+                    {/* MODAL: USTAWIENIA / API KEY */}
                     {showSettingsModal && (
                         <div className="modal-overlay" onClick={() => setShowSettingsModal(false)}>
-                            <div className="bg-slate-800 border border-slate-600 rounded-xl shadow-2xl w-full max-w-md flex flex-col" onClick={e => e.stopPropagation()}>
-                                <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-900 rounded-t-xl">
-                                    <h2 className="text-lg font-bold text-white"><i className="fa-solid fa-gear text-slate-400 mr-2"></i> Ustawienia Aplikacji</h2>
-                                    <button onClick={() => setShowSettingsModal(false)} className="text-slate-400 hover:text-white text-xl px-2"><i className="fa-solid fa-xmark"></i></button>
-                                </div>
-                                <div className="p-6">
-                                    <h3 className="text-sm font-bold text-amber-500 mb-2">Konfiguracja Klucza API Gemini</h3>
-                                    <p className="text-xs text-slate-300 mb-4 leading-relaxed">
-                                        Aby generator architektoniczny AI oraz opisy pułapek działały na własnym hostingu, wpisz swój prywatny darmowy klucz Google Gemini API. Zostanie on zapisany <strong>bezpiecznie tylko w Twojej przeglądarce</strong> (localStorage).
-                                    </p>
-                                    <form onSubmit={saveApiKey} className="space-y-4">
-                                        <div>
-                                            <input type="password" value={geminiApiKey} onChange={e => setGeminiApiKey(e.target.value)} placeholder="Wklej klucz (np. AIzaSy...)" className="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:border-amber-500 outline-none font-mono" />
-                                        </div>
-                                        <button type="submit" className="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 px-4 rounded shadow">Zapisz Klucz</button>
-                                    </form>
-                                    <div className="mt-4 pt-4 border-t border-slate-700 text-[10px] text-slate-400 text-center">
-                                        Pobierz go za darmo z <a href="https://aistudio.google.com/" target="_blank" className="text-blue-400 hover:underline">Google AI Studio</a>.
-                                    </div>
+                            <div className="bg-slate-800 border border-slate-600 rounded-xl shadow-2xl w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
+                                <h2 className="text-lg font-bold text-white mb-2"><i className="fa-solid fa-key text-amber-500 mr-2"></i> Klucz API Gemini</h2>
+                                <p className="text-xs text-slate-300 mb-4 leading-relaxed">
+                                    Strona zapisuje klucz <strong>tylko w Twojej przeglądarce</strong>. Dzięki temu możesz hostować tę stronę na GitHub Pages bezpiecznie, bez wycieku klucza w repozytorium.
+                                </p>
+                                <div className="space-y-3">
+                                    <input type="password" value={geminiApiKey} onChange={e => {setGeminiApiKey(e.target.value); localStorage.setItem('scooby_gemini_api_key', e.target.value);}} placeholder="Wklej klucz API (AIzaSy...)" className="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white font-mono" />
+                                    <button onClick={() => setShowSettingsModal(false)} className="w-full bg-amber-600 text-slate-900 font-bold py-2 rounded">Gotowe</button>
                                 </div>
                             </div>
                         </div>
